@@ -1,0 +1,18 @@
+beautifulsoup4==4.14.3
+certifi==2026.4.22
+charset-normalizer==3.4.7
+idna==3.13
+Markdown==3.10.2
+markdownify==1.2.2
+pillow==12.2.0
+pymupdf==1.28.0
+# Pinned to the 0.x line on purpose: 1.x pulls in onnxruntime/pymupdf_layout
+# for ML layout analysis. 0.3.4 is pure PyMuPDF - fully offline, no models.
+pymupdf4llm==0.3.4
+tabulate==0.10.0
+requests==2.33.1
+six==1.17.0
+soupsieve==2.8.3
+tkhtmlview==0.3.2
+typing_extensions==4.15.0
+urllib3==2.6.3

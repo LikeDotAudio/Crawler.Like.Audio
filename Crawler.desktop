@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Py Crawl
+Name=Crawler
 Comment=Crawl and analyze folder structures
 Exec="/home/anthony/Documents/GitProjects/Crawler/run_crawler.sh"
 Icon=/home/anthony/Documents/GitProjects/Crawler/crawler_icon.svg

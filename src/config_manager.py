@@ -54,12 +54,42 @@ class ConfigManager:
         self.config['General']['make_zip'] = str(value)
         self._save_config()
 
+    def get_web_url(self):
+        return self.config['General'].get('web_url', '')
+
+    def set_web_url(self, url):
+        self.config['General']['web_url'] = url
+        self._save_config()
+
+    def get_pdf_folder(self):
+        return self.config['General'].get('pdf_folder', '')
+
+    def set_pdf_folder(self, path):
+        self.config['General']['pdf_folder'] = path
+        self._save_config()
+
+    def get_pdf_output_folder(self):
+        return self.config['General'].get('pdf_output_folder', '')
+
+    def set_pdf_output_folder(self, path):
+        self.config['General']['pdf_output_folder'] = path
+        self._save_config()
+
+    def get_pdf_filter(self):
+        return self.config['General'].get('pdf_filter', '')
+
+    def set_pdf_filter(self, value):
+        self.config['General']['pdf_filter'] = value
+        self._save_config()
+
     def get_selected_extensions(self):
-        exts = self.config['General'].get('selected_extensions', '')
-        return set(exts.split(',')) if exts else set()
+        raw = self.config['General'].get('selected_extensions', '')
+        if not raw:
+            return []
+        return raw.split('||')
 
     def set_selected_extensions(self, extensions):
-        self.config['General']['selected_extensions'] = ','.join(extensions)
+        self.config['General']['selected_extensions'] = '||'.join(extensions)
         self._save_config()
 
     def get_drive_url(self):

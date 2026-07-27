@@ -5,7 +5,7 @@ import shutil
 import inspect
 import re
 from .file_processor_module import FileProcessor
-from .utils_module import debug_log, current_version
+from .utils_module import debug_log, current_version, GitIgnoreMatcher
 
 class Crawler:
     def __init__(self, target_directory, saver, allowed_extensions=None, log_callback=None):
@@ -15,6 +15,8 @@ class Crawler:
         self.log_callback = log_callback
         self.current_file = os.path.basename(__file__)
         self.file_processor = FileProcessor(log_callback=log_callback)
+        self.gitignore_matcher = GitIgnoreMatcher(target_directory)
+        self.respect_gitignore = True
 
     def crawl(self):
         current_function = inspect.currentframe().f_code.co_name
@@ -51,7 +53,12 @@ class Crawler:
             # Ignore crawl output directories and ignored folders
             dirs_to_remove = []
             for d in dirs:
-                if d.lower() == 'crawl' or d.lower() == '.crawler' or re.match(r'^\d{14}$', d) or d.startswith('.'):
+                full_path = os.path.join(root, d)
+                if (d.lower() == 'crawl' or 
+                    d.lower() == '.crawler' or 
+                    re.match(r'^\d{14}$', d) or 
+                    d.startswith('.') or 
+                    (self.respect_gitignore and self.gitignore_matcher.is_ignored(full_path))):
                     dirs_to_remove.append(d)
             for d in dirs_to_remove:
                 dirs.remove(d)
@@ -65,7 +72,7 @@ class Crawler:
                 if self.log_callback:
                     self.log_callback(f"\n└── {display_root}", "dir")
                 self.saver.write_log(f"\n└── {display_root}")
-                
+
                 indent_str = "    " * (current_indent_level - 1)
                 map_output_lines.append(f"#{indent_str}└── {os.path.basename(root)}/\n")
 
@@ -83,9 +90,12 @@ class Crawler:
                 elif item in files:
                     if item.lower() == "__init__.py":
                         continue
-                    
+
                     file_path = os.path.join(root, item)
-                    
+
+                    # Filter by .gitignore
+                    if self.respect_gitignore and self.gitignore_matcher.is_ignored(file_path):
+                        continue
                     # Filter by extension if provided
                     if self.allowed_extensions is not None:
                         _, ext = os.path.splitext(item)
@@ -98,7 +108,7 @@ class Crawler:
                             line_count = sum(1 for _ in f)
                     except:
                         line_count = 'N/A'
-                    
+
                     file_line = f"#{indent_str}{prefix}{item} (Lines: {line_count})"
                     map_output_lines.append(file_line + "\n")
 
@@ -118,17 +128,17 @@ class Crawler:
                             json_lines = self.file_processor.analyze_json_file(file_path, current_indent_level + 1)
                             for line in json_lines:
                                 map_output_lines.append(line + "\n")
-                        
+
                         # Write to EVERYTHING log
                         try:
                             with open(file_path, "r", encoding="utf-8", errors='replace') as gf:
                                 content = gf.read()
-                            
+
                             relative_path = os.path.join(os.path.basename(self.target_directory), os.path.relpath(file_path, self.target_directory))
-                            
+
                             if self.log_callback:
                                 self.log_callback(f"    [APPENDING] {item} to EVERYTHING.py.LOG", "import")
-                            
+
                             self.saver.write_everything(
                                 f"#####################################\n"
                                 f"### File: {relative_path}\n"
@@ -142,5 +152,5 @@ class Crawler:
                     elif item.lower() == "__init__.py":
                         if self.log_callback:
                             self.log_callback(f"    [INFO] Ignoring __init__.py: {item}", "file")
-        
+
         self.saver.write_map(map_output_lines)

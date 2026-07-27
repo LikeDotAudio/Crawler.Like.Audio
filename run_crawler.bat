@@ -2,10 +2,8 @@
 :: Navigate to the directory where this batch file is located
 cd /d "%~dp0"
 
-:: Check if python is in the path and run the application
+:: Run with the system Python (no virtual environment)
 python main.py
-
-:: If it fails, try python3
 if %errorlevel% neq 0 (
     python3 main.py
 )

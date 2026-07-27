@@ -20,7 +20,10 @@ from .tabs.select_folder_tab import SelectFolderTab
 from .tabs.file_types_tab import FileTypesTab
 from .tabs.regenerate_tab import RegenerateTab
 from .tabs.view_logs_tab import ViewLogsTab
+from .tabs.WebCrawler.web_crawler_tab import WebCrawlerTab
 from .tabs.visual_explorer import VisualExplorerTab
+from .tabs.usb_devices_tab import USBDevicesTab
+from .tabs.PdfToMd import PdfToMdTab
 
 class FolderCrawlerApp:
     def __init__(self, root, start_directory):
@@ -114,14 +117,20 @@ class FolderCrawlerApp:
         self.tab_select = SelectFolderTab(self.notebook, self._on_folder_selected)
         self.tab_files = FileTypesTab(self.notebook, self._start_crawl)
         self.tab_view = ViewLogsTab(self.notebook)
+        self.tab_web = WebCrawlerTab(self.notebook, self._log, self.config_manager)
         self.tab_visual = VisualExplorerTab(self.notebook, self)
         self.tab_regen = RegenerateTab(self.notebook, self._start_regeneration)
+        self.tab_usb = USBDevicesTab(self.notebook)
+        self.tab_pdf = PdfToMdTab(self.notebook, self._log, self.config_manager)
 
         self.notebook.add(self.tab_select, text=" 📁 1. SELECT FOLDER ")
         self.notebook.add(self.tab_files, text=" ⚙️ 2. FILE TYPES ")
         self.notebook.add(self.tab_view, text=" 📑 3. VIEW LOGS ")
         self.notebook.add(self.tab_visual, text=" 🗺️ 4. VISUAL EXPLORER ")
         self.notebook.add(self.tab_regen, text=" 🛠️ 5. REGENERATE ")
+        self.notebook.add(self.tab_usb, text=" 🔍 6. USB DEVICES ")
+        self.notebook.add(self.tab_web, text=" 🌐 7. WEB CRAWLER ")
+        self.notebook.add(self.tab_pdf, text=" 📄 8. PDF TO MD ")
 
         # 3. Bottom Area for Global Actions
         bottom_frame = ttk.Frame(self.root)
@@ -184,10 +193,10 @@ class FolderCrawlerApp:
         self.tab_files.update_directory(path)
         self.notebook.select(self.tab_files)
 
-    def _start_crawl(self, target_dir, allowed_extensions, make_zip):
+    def _start_crawl(self, target_dir, allowed_extensions, make_zip, respect_gitignore=True):
         self._log(f"Starting crawl on {target_dir}", "header")
         ext_list_str = ", ".join(allowed_extensions)
-        self.config_manager.log_process("Crawl Start", f"Target: {target_dir}, Types: [{ext_list_str}]")
+        self.config_manager.log_process("Crawl Start", f"Target: {target_dir}, Types: [{ext_list_str}], Respect Git: {respect_gitignore}")
         
         # New Output Location: Inside target/.crawler/folder_name-timestamp
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
@@ -223,13 +232,14 @@ class FolderCrawlerApp:
              self._log(f"❌ Error creating output dir or gitignore: {e}", "header")
              return
         
-        threading.Thread(target=self._crawl_thread, args=(target_dir, allowed_extensions, make_zip), daemon=True).start()
+        threading.Thread(target=self._crawl_thread, args=(target_dir, allowed_extensions, make_zip, respect_gitignore), daemon=True).start()
 
-    def _crawl_thread(self, target_dir, allowed_extensions, make_zip):
+    def _crawl_thread(self, target_dir, allowed_extensions, make_zip, respect_gitignore):
         saver = DataSaver(self.output_dir, log_callback=self._log)
         saver.open_files()
         
         crawler = Crawler(target_dir, saver, allowed_extensions=allowed_extensions, log_callback=self._log)
+        crawler.respect_gitignore = respect_gitignore
         crawler.crawl()
         
         saver.prepend_map_to_everything()
