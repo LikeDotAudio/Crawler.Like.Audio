@@ -173,7 +173,7 @@ export function AudioConverterView() {
       } else {
         // Convert to MP3
         const mp3Data = encodeAudioBufferToMp3(decodedBuffer);
-        convertedBlob = new Blob([mp3Data], { type: "audio/mp3" });
+        convertedBlob = new Blob([mp3Data as any], { type: "audio/mp3" });
         newName = file.name.substring(0, file.name.lastIndexOf('.')) + ".mp3";
       }
 
