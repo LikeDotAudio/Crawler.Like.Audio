@@ -19,20 +19,22 @@ function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
   }, [nodes, edges, fitView]);
 
   return (
-    <ReactFlow 
-      nodes={nodes}
-      edges={edges}
-      fitView
-      className="bg-transparent"
-    >
-      <Background color="#f97316" gap={20} size={1} />
-      <Controls className="bg-card border-border fill-foreground" />
-      <MiniMap 
-        className="bg-card border border-border rounded-lg overflow-hidden" 
-        nodeColor="#f97316" 
-        maskColor="oklch(0.18 0.01 270 / 50%)"
-      />
-    </ReactFlow>
+    <div className="w-full h-full">
+      <ReactFlow 
+        nodes={nodes}
+        edges={edges}
+        fitView
+        className="bg-transparent"
+      >
+        <Background color="#f97316" gap={20} size={1} />
+        <Controls className="bg-card border-border fill-foreground" />
+        <MiniMap 
+          className="bg-card border border-border rounded-lg overflow-hidden" 
+          nodeColor="#f97316" 
+          maskColor="oklch(0.18 0.01 270 / 50%)"
+        />
+      </ReactFlow>
+    </div>
   );
 }
 
@@ -57,7 +59,7 @@ export function VisualExplorerView() {
   }, [graphData, maxDepth]);
 
   return (
-    <div className="w-full h-full flex flex-col space-y-4 animate-in fade-in zoom-in-95 duration-300">
+    <div className="w-full flex-1 flex flex-col space-y-4 animate-in fade-in zoom-in-95 duration-300">
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground">Visual Explorer</h2>

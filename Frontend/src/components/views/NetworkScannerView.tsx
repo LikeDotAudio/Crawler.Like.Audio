@@ -94,7 +94,7 @@ export function NetworkScannerView() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in zoom-in-95 duration-300">
+    <div className="w-full flex-1 flex flex-col space-y-6 animate-in fade-in zoom-in-95 duration-300">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
           <Network className="w-8 h-8 text-primary" /> LAN IP Sweeper
