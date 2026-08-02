@@ -16,20 +16,23 @@ interface TreeNode {
 const EXT_COLORS: Record<string, string> = {
   ".js": "#f7df1e",
   ".jsx": "#f7df1e",
-  ".ts": "#3178c6",
-  ".tsx": "#3178c6",
+  ".ts": "#00d8ff",
+  ".tsx": "#00d8ff",
   ".json": "#8bc34a",
-  ".md": "#ff9800",
-  ".html": "#e34f26",
-  ".css": "#1572b6",
+  ".md": "#ff00ff",
+  ".html": "#ff0000",
+  ".css": "#00ff00",
   ".py": "#3572A5",
-  ".csv": "#4CAF50",
+  ".csv": "#ffcc00",
   ".svg": "#ffb300",
-  ".png": "#e91e63",
-  ".jpg": "#e91e63",
-  ".jpeg": "#e91e63",
+  ".png": "#00ff00",
+  ".jpg": "#ff00ff",
+  ".jpeg": "#ff00ff",
+  ".wav": "#00ffff",
+  ".mp4": "#ff4040",
+  ".zip": "#00ff00",
   "folder": "#334155",
-  "default": "#64748b"
+  "default": "#0000ff"
 };
 
 export function ScopMapView() {
@@ -119,9 +122,9 @@ export function ScopMapView() {
     // The dimensions here are arbitrary relative units that we will map to percentages
     const treemap = d3.treemap<TreeNode>()
       .size([100, 100])
-      .paddingInner(1)
-      .paddingOuter(2)
-      .paddingTop(20)
+      .paddingInner(0)
+      .paddingOuter(0)
+      .paddingTop(0)
       .round(false);
 
     return treemap(hierarchy);
@@ -247,38 +250,38 @@ export function ScopMapView() {
               
               if (width < 0.1 || height < 0.1) return null; // Too small to render
               
+              const baseColor = getColor(node);
+              const bgStyle = isRoot 
+                ? 'transparent' 
+                : isLeaf 
+                  ? `radial-gradient(circle at center, rgba(255,255,255,0.9) 0%, ${baseColor} 45%, #000000 130%)`
+                  : 'transparent'; // Folders are invisible in classic WinDirStat treemap
+
               return (
                 <div
                   key={i}
                   title={`${node.data.name}\nSize: ${formatBytes(node.data.value || 0)}`}
-                  className={`absolute overflow-hidden transition-all duration-300 hover:brightness-110 group ${
-                    isLeaf ? 'cursor-crosshair shadow-sm border border-black/20' : 'pointer-events-none border border-slate-800/50'
+                  className={`absolute overflow-hidden transition-all duration-300 group ${
+                    isLeaf ? 'cursor-crosshair shadow-2xl hover:z-50 hover:scale-[1.02]' : 'pointer-events-none'
                   }`}
                   style={{
                     left: `${x0}%`,
                     top: `${y0}%`,
                     width: `${width}%`,
                     height: `${height}%`,
-                    backgroundColor: isRoot ? 'transparent' : getColor(node),
+                    background: bgStyle,
                     zIndex: node.depth,
-                    borderTopLeftRadius: isLeaf ? '0' : '4px',
-                    borderTopRightRadius: isLeaf ? '0' : '4px',
+                    border: isLeaf ? '1px solid rgba(0,0,0,0.8)' : 'none',
+                    boxShadow: isLeaf ? 'inset 0 0 4px rgba(0,0,0,0.5), inset 0 0 1px rgba(255,255,255,0.5)' : 'none'
                   }}
                 >
-                  {/* Directory Header Label */}
-                  {!isLeaf && showLabels && height > 4 && width > 4 && (
-                    <div className="absolute top-0 left-0 w-full px-1 py-0.5 text-[10px] font-bold text-slate-300/80 truncate bg-slate-900/40 backdrop-blur-sm shadow-sm pointer-events-auto">
-                      {node.data.name}
-                    </div>
-                  )}
-                  
                   {/* File Label */}
-                  {isLeaf && showLabels && width > 3 && height > 3 && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm">
-                      <span className="text-[11px] font-bold text-white truncate w-full text-center drop-shadow-md">
+                  {isLeaf && showLabels && width > 4 && height > 4 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm z-10">
+                      <span className="text-[12px] font-bold text-white truncate w-full text-center drop-shadow-md">
                         {node.data.name}
                       </span>
-                      <span className="text-[9px] font-mono text-slate-300 truncate w-full text-center">
+                      <span className="text-[10px] font-mono text-slate-300 truncate w-full text-center mt-1">
                         {formatBytes(node.data.value || 0)}
                       </span>
                     </div>
