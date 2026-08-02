@@ -3,7 +3,7 @@
 import { useAppStore, extensionEmojiMap } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderSearch, Play, Square, FileText, Download, ShieldAlert, FolderTree } from 'lucide-react';
+import { FolderSearch, Play, Square, FileText, Download, ShieldAlert, FolderTree, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
 import { astParser } from '@/lib/astParser';
@@ -299,7 +299,9 @@ export function CrawlerView() {
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 animate-in fade-in zoom-in-95 duration-300">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">File Crawler</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+          <Search className="w-8 h-8 text-primary" /> File Crawler
+        </h2>
         <p className="text-muted-foreground mt-1">Configure and monitor your local file system analysis.</p>
       </div>
       

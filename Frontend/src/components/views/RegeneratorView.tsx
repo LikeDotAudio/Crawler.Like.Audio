@@ -142,7 +142,9 @@ export function RegeneratorView() {
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 animate-in fade-in zoom-in-95 duration-300">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Project Regenerator</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+          <RefreshCw className="w-8 h-8 text-primary" /> Project Regenerator
+        </h2>
         <p className="text-muted-foreground mt-1">Unpack an EVERYTHING.LOG scrape file back into a physical file structure.</p>
       </div>
       

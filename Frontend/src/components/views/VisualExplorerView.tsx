@@ -6,7 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ArrowRight, ArrowDown, FileText, FileX } from 'lucide-react';
+import { Layers, ArrowRight, ArrowDown, FileText, FileX, Network } from 'lucide-react';
 
 function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
   const { fitView } = useReactFlow();
@@ -87,7 +87,9 @@ export function VisualExplorerView() {
     <div className="w-full flex-1 flex flex-col space-y-4 animate-in fade-in zoom-in-95 duration-300">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Visual Explorer</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+            <Network className="w-8 h-8 text-primary" /> Visual Explorer
+          </h2>
           <p className="text-muted-foreground mt-1">Dependency graph representation of your parsed codebase.</p>
         </div>
         
