@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -18,6 +18,8 @@ export function Sidebar() {
     { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
     { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
     { id: 'csv-to-json', label: 'CSV to JSON', icon: Table },
+    { id: 'json-to-csv', label: 'JSON to CSV', icon: FileJson },
+    { id: 'json-converter', label: 'JSON to YAML/XML', icon: CodeXml },
   ] as const;
 
   return (
