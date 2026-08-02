@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+/* Custom React Flow Controls Styles */
+.react-flow__controls-button {
+  background-color: #e5e7eb !important; /* gray-200 */
+  border-bottom: 1px solid #d1d5db !important; /* gray-300 */
+  fill: #000 !important;
+}
+.react-flow__controls-button:hover {
+  background-color: #d1d5db !important; /* gray-300 */
+}
