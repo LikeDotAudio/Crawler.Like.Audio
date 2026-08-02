@@ -1,12 +1,40 @@
 "use client";
 
 import { useAppStore } from '@/store/useAppStore';
-import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Layers } from 'lucide-react';
+
+function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
+  const { fitView } = useReactFlow();
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fitView({ duration: 800, padding: 0.2 });
+    }, 50);
+    return () => clearTimeout(timeout);
+  }, [nodes, edges, fitView]);
+
+  return (
+    <ReactFlow 
+      nodes={nodes}
+      edges={edges}
+      fitView
+      className="bg-transparent"
+    >
+      <Background color="#f97316" gap={20} size={1} />
+      <Controls className="bg-card border-border fill-foreground" />
+      <MiniMap 
+        className="bg-card border border-border rounded-lg overflow-hidden" 
+        nodeColor="#f97316" 
+        maskColor="oklch(0.18 0.01 270 / 50%)"
+      />
+    </ReactFlow>
+  );
+}
 
 export function VisualExplorerView() {
   const { graphData } = useAppStore();
@@ -67,20 +95,9 @@ export function VisualExplorerView() {
       
       <Card className="flex-1 overflow-hidden border-border/50 shadow-inner bg-card/50 relative rounded-2xl">
         {filteredGraphData ? (
-          <ReactFlow 
-            nodes={filteredGraphData.nodes}
-            edges={filteredGraphData.edges}
-            fitView
-            className="bg-transparent"
-          >
-            <Background color="#f97316" gap={20} size={1} />
-            <Controls className="bg-card border-border fill-foreground" />
-            <MiniMap 
-              className="bg-card border border-border rounded-lg overflow-hidden" 
-              nodeColor="#f97316" 
-              maskColor="oklch(0.18 0.01 270 / 50%)"
-            />
-          </ReactFlow>
+          <ReactFlowProvider>
+            <FlowMap nodes={filteredGraphData.nodes} edges={filteredGraphData.edges} />
+          </ReactFlowProvider>
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             No graph data available. Run a crawl first.
