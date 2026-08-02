@@ -10,6 +10,7 @@ import { WebCrawlerView } from '@/components/views/WebCrawlerView';
 import { PdfToMdView } from '@/components/views/PdfToMdView';
 import { RegeneratorView } from '@/components/views/RegeneratorView';
 import { AuditView } from '@/components/views/AuditView';
+import { CsvToJsonView } from '@/components/views/CsvToJsonView';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Home() {
@@ -33,6 +34,7 @@ export default function Home() {
           {activeTab === 'pdf-to-md' && <PdfToMdView />}
           {activeTab === 'regenerator' && <RegeneratorView />}
           {activeTab === 'audit' && <AuditView />}
+          {activeTab === 'csv-to-json' && <CsvToJsonView />}
         </div>
       </main>
     </div>

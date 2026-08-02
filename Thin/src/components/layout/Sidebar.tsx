@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -17,6 +17,7 @@ export function Sidebar() {
     { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
     { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
     { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
+    { id: 'csv-to-json', label: 'CSV to JSON', icon: Table },
   ] as const;
 
   return (

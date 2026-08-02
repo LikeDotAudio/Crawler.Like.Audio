@@ -21,7 +21,7 @@ interface HeaderConfig {
   partName: string;
 }
 
-export default function CsvToJsonPage() {
+export function CsvToJsonView() {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [configs, setConfigs] = useState<Record<string, HeaderConfig>>({});
@@ -187,8 +187,8 @@ export default function CsvToJsonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-8 font-sans selection:bg-indigo-500/30">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="w-full flex flex-col gap-6">
+      <div className="w-full space-y-8">
         
         {/* Header Section */}
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
