@@ -40,4 +40,4 @@ jobs:
           local-dir: ./Thin/out/
           
           # Deploy to the root of the FTP server (change if needed)
-          server-dir: /
+          server-dir: ./
