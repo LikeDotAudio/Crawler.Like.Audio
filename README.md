@@ -72,7 +72,7 @@ Because this project is designed as a **Static Frontend**, there is no backend s
 
 1. Install dependencies:
 ```bash
-cd Frontend
+cd Thin
 npm install
 ```
 
