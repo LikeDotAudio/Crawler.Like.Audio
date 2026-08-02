@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppStore, extensionEmojiMap } from '@/store/useAppStore';
+import { useAppStore, extensionEmojiMap, FileCategory } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FolderSearch, Play, Square, FileText, Download, ShieldAlert, FolderTree, Search } from 'lucide-react';
@@ -9,6 +9,88 @@ import { FileTypeSelector } from './FileTypeSelector';
 import { astParser } from '@/lib/astParser';
 import ignore from 'ignore';
 import JSZip from 'jszip';
+
+const CATEGORY_MAP: Record<string, string[]> = {
+  'PROGRAMMING': ['.js', '.jsx', '.ts', '.tsx', '.py', '.php', '.go', '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.rb', '.sh', '.bash'],
+  'WEB & MARKUP': ['.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.svg'],
+  'DATA & CONFIG': ['.json', '.yml', '.yaml', '.toml', '.ini', '.env', '.sql', '.csv', '.tsv'],
+  'DOCS': ['.md', '.txt', '.pdf', '.doc', '.docx', '.rst'],
+};
+
+const preScanDirectory = async (dirHandle: any, updateCategories: (categories: FileCategory[]) => void, addLog: (msg: string) => void) => {
+    addLog('[INFO] Starting fast pre-scan to discover file types...');
+    const extStats: Record<string, { count: number, sizeBytes: number }> = {};
+    let scannedFiles = 0;
+
+    const scan = async (handle: any) => {
+        try {
+            for await (const entry of handle.values()) {
+                if (entry.kind === 'file') {
+                    const file = await entry.getFile();
+                    scannedFiles++;
+                    const name = file.name;
+                    const extIndex = name.lastIndexOf('.');
+                    const ext = extIndex !== -1 ? name.substring(extIndex).toLowerCase() : 'unknown';
+                    
+                    if (!extStats[ext]) {
+                        extStats[ext] = { count: 0, sizeBytes: 0 };
+                    }
+                    extStats[ext].count++;
+                    extStats[ext].sizeBytes += file.size;
+                    
+                    if (scannedFiles % 2500 === 0) {
+                        addLog(`[INFO] Pre-scanned ${scannedFiles} files...`);
+                    }
+                } else if (entry.kind === 'directory') {
+                    if (entry.name !== '.git' && entry.name !== 'node_modules') {
+                        await scan(entry);
+                    }
+                }
+            }
+        } catch (e) {
+            // Ignore access errors
+        }
+    };
+
+    await scan(dirHandle);
+
+    const categoriesMap: Record<string, FileCategory> = {
+        'PROGRAMMING': { name: 'PROGRAMMING', extensions: [] },
+        'WEB & MARKUP': { name: 'WEB & MARKUP', extensions: [] },
+        'DATA & CONFIG': { name: 'DATA & CONFIG', extensions: [] },
+        'DOCS': { name: 'DOCS', extensions: [] },
+        'OTHER': { name: 'OTHER', extensions: [] },
+    };
+
+    const getCategoryForExt = (ext: string) => {
+        for (const [cat, exts] of Object.entries(CATEGORY_MAP)) {
+            if (exts.includes(ext)) return cat;
+        }
+        return 'OTHER';
+    };
+
+    for (const [ext, stats] of Object.entries(extStats)) {
+        if (ext === 'unknown') continue;
+        const catName = getCategoryForExt(ext);
+        categoriesMap[catName].extensions.push({
+            ext,
+            count: stats.count,
+            sizeMB: stats.sizeBytes / (1024 * 1024),
+            selected: true,
+            emoji: extensionEmojiMap[ext] || '📄'
+        });
+    }
+
+    const finalCategories = Object.values(categoriesMap)
+        .filter(c => c.extensions.length > 0)
+        .map(c => ({
+            ...c,
+            extensions: c.extensions.sort((a, b) => b.count - a.count)
+        }));
+
+    updateCategories(finalCategories);
+    addLog(`[SUCCESS] Pre-scan complete. Discovered ${scannedFiles} files and mapped their types.`);
+};
 
 export function CrawlerView() {
   const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
@@ -252,6 +334,10 @@ export function CrawlerView() {
         useAppStore.getState().setGraphData(null);
         
         addCrawlLog(`[INFO] Successfully granted access to directory: ${handle.name}`);
+        
+        // Kick off prescan
+        await preScanDirectory(handle, useAppStore.getState().setFileCategories, addCrawlLog);
+        
       } else {
         addCrawlLog('[ERROR] Your browser does not support the File System Access API. Please use Chrome or Edge.');
       }

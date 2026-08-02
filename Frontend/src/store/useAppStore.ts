@@ -33,6 +33,7 @@ interface AppState {
   
   // File Discovery State
   fileCategories: FileCategory[];
+  setFileCategories: (categories: FileCategory[]) => void;
   toggleExtension: (categoryName: string, ext: string) => void;
   toggleCategory: (categoryName: string, selectAll: boolean) => void;
   toggleAllCategories: (selectAll: boolean) => void;
@@ -130,7 +131,8 @@ export const useAppStore = create<AppState>()(
         return { recentFolders: Array.from(folders).slice(0, 10) };
       }),
       
-      fileCategories: mockFileCategories,
+      fileCategories: [],
+      setFileCategories: (categories) => set({ fileCategories: categories }),
       toggleExtension: (categoryName, ext) => set((state) => ({
         fileCategories: state.fileCategories.map(cat => 
           cat.name === categoryName 
