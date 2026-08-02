@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, PackageSearch, Ghost, SearchCode, Ruler, FolderSearch, Play } from 'lucide-react';
+import { ShieldAlert, PackageSearch, Ghost, SearchCode, Ruler, FolderSearch, Play, Download } from 'lucide-react';
 import ignore from 'ignore';
 
 export function AuditView() {
@@ -29,6 +29,19 @@ export function AuditView() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const downloadReport = () => {
+    const content = auditLogs.join('\n');
+    const blob = new Blob(['\uFEFF' + content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Audit_Report_${activeAudit || 'scan'}_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const runAudit = async (auditType: string) => {
@@ -185,8 +198,17 @@ export function AuditView() {
         </div>
 
         <Card className="w-2/3 shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col">
-          <CardHeader className="border-b border-border/50 bg-muted/30 pb-4">
+          <CardHeader className="border-b border-border/50 bg-muted/30 pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-sm">Audit Console Output</CardTitle>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="h-8 gap-2 bg-background hover:bg-primary/20 hover:text-primary transition-colors"
+              onClick={downloadReport}
+              disabled={auditLogs.length === 0 || isAuditing}
+            >
+              <Download className="w-3 h-3" /> Export Report
+            </Button>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-hidden relative">
             <div className="h-[500px] w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm">
