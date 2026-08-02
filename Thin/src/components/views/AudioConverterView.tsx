@@ -193,10 +193,10 @@ export function AudioConverterView() {
         
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-transparent drop-shadow-sm mb-2">
-              Media Converter
-            </h1>
-            <p className="text-slate-400">Instantly convert between MP3 and WAV entirely in your browser.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3 mb-2">
+              <Music className="w-8 h-8 text-primary" /> Media Converter
+            </h2>
+            <p className="text-muted-foreground mt-1">Instantly convert between MP3 and WAV entirely in your browser.</p>
           </div>
           
           <div className="flex items-center gap-4">

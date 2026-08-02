@@ -87,10 +87,10 @@ export function JsonPrettyPrintView() {
         
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent drop-shadow-sm mb-2">
-              JSON Pretty Printer
-            </h1>
-            <p className="text-slate-400">Format and beautify your raw JSON data.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3 mb-2">
+              <FileJson className="w-8 h-8 text-primary" /> JSON Pretty Printer
+            </h2>
+            <p className="text-muted-foreground mt-1">Format and beautify your raw JSON data.</p>
           </div>
           
           <div className="flex items-center gap-4">
