@@ -10,6 +10,7 @@ export function RegeneratorView() {
   const [outputDirHandle, setOutputDirHandle] = useState<any>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addLog = (msg: string) => {
@@ -35,6 +36,48 @@ export function RegeneratorView() {
     if (file) {
       setLogFile(file);
       addLog(`Selected scrape file: ${file.name}`);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+  
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        const item = e.dataTransfer.items[i];
+        if (item.kind === 'file') {
+          try {
+            // @ts-ignore - non-standard API but supported in chromium
+            const handle = await item.getAsFileSystemHandle();
+            if (handle?.kind === 'directory') {
+              setOutputDirHandle(handle);
+              addLog(`Selected output directory via drag & drop: ${handle.name}`);
+            } else if (handle?.kind === 'file') {
+              const file = await (handle as any).getFile();
+              setLogFile(file);
+              addLog(`Selected scrape file via drag & drop: ${file.name}`);
+            }
+          } catch (err) {
+            // Fallback for browsers that don't support getAsFileSystemHandle
+            const file = item.getAsFile();
+            if (file) {
+              setLogFile(file);
+              addLog(`Selected scrape file via drag & drop: ${file.name}`);
+            }
+          }
+        }
+      }
     }
   };
 
@@ -111,7 +154,12 @@ export function RegeneratorView() {
             </CardTitle>
             <CardDescription>Select the log file and a destination folder.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent 
+            className={`space-y-6 transition-colors rounded-b-xl border-2 border-transparent p-6 ${isDragging ? 'bg-primary/10 border-primary border-dashed' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             
             <div className="space-y-2">
               <label className="text-sm font-medium">1. Scrape File</label>

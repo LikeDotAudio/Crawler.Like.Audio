@@ -10,6 +10,7 @@ export function PdfToMdView() {
   const [output, setOutput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -19,7 +20,10 @@ export function PdfToMdView() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) await processFile(file);
+  };
+
+  const processFile = async (file: File) => {
     if (file.type !== 'application/pdf') {
       alert('Please upload a valid PDF file.');
       return;
@@ -48,6 +52,24 @@ export function PdfToMdView() {
       setOutput('Failed to extract text from PDF. The file might be corrupted or protected.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+  
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await processFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -80,22 +102,27 @@ export function PdfToMdView() {
             <CardDescription>Upload a PDF document to begin extraction locally.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <input 
-              type="file" 
-              accept=".pdf" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleFileChange}
-            />
-            
-            <Button 
-              onClick={() => fileInputRef.current?.click()} 
-              className="w-full gap-2 shadow-lg shadow-primary/20 h-16 border-2 border-dashed border-primary/50 hover:bg-primary/10 bg-transparent text-primary hover:text-primary"
-              disabled={isLoading}
+            <div 
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`w-full h-32 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                isDragging ? 'border-primary bg-primary/20' : 'border-primary/50 hover:bg-primary/10 bg-transparent text-primary'
+              }`}
             >
-              <Upload className={`w-6 h-6 ${isLoading ? 'animate-bounce' : ''}`} /> 
-              {isLoading ? 'Parsing PDF...' : 'Select PDF File'}
-            </Button>
+              <input 
+                type="file" 
+                accept=".pdf" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleFileChange}
+              />
+              <Upload className={`w-8 h-8 mb-2 ${isLoading ? 'animate-bounce' : ''}`} /> 
+              <span className="font-semibold text-sm">
+                {isLoading ? 'Parsing PDF...' : isDragging ? 'Drop PDF here' : 'Drag & Drop PDF or Click to Select'}
+              </span>
+            </div>
             
             {fileName && (
               <div className="text-xs text-center text-muted-foreground font-mono truncate px-2">
