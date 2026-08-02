@@ -343,70 +343,74 @@ export function CrawlerView() {
               </div>
             </div>
             
-            <div className="pt-4 flex flex-col gap-3">
-              {!isCrawling ? (
-                <>
-                  <Button onClick={() => handleStart(true)} className="w-full gap-2 shadow-lg shadow-primary/20 text-xs h-9">
-                    <Play className="w-3 h-3" /> Start Crawl (Respect .gitignore)
+            {!(mapText || scrapeText) && (
+              <div className="pt-4 flex flex-col gap-3">
+                {!isCrawling ? (
+                  <>
+                    <Button onClick={() => handleStart(true)} className="w-full gap-2 shadow-lg shadow-primary/20 text-xs h-9 text-black font-bold">
+                      <Play className="w-3 h-3" /> Start Crawl (Respect .gitignore)
+                    </Button>
+                    <Button onClick={() => handleStart(false)} variant="secondary" className="w-full gap-2 text-xs h-9 border border-border/50 text-black font-bold">
+                      <Play className="w-3 h-3" /> Start Crawl (Ignore .gitignore)
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={handleStop} variant="destructive" className="w-full gap-2 shadow-lg shadow-destructive/20 animate-pulse text-xs h-9 font-bold">
+                    <Square className="w-3 h-3 fill-current" /> Stop Process
                   </Button>
-                  <Button onClick={() => handleStart(false)} variant="secondary" className="w-full gap-2 text-xs h-9 border border-border/50">
-                    <Play className="w-3 h-3" /> Start Crawl (Ignore .gitignore)
-                  </Button>
-                </>
-              ) : (
-                <Button onClick={handleStop} variant="destructive" className="w-full gap-2 shadow-lg shadow-destructive/20 animate-pulse text-xs h-9">
-                  <Square className="w-3 h-3 fill-current" /> Stop Process
-                </Button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {(mapText || scrapeText) && !isCrawling && (
-              <div className="pt-4 border-t border-border/50 flex flex-col gap-3">
-                <Button 
-                  onClick={() => useAppStore.getState().setActiveTab('visualizer')} 
-                  variant="default" 
-                  className="w-full gap-2 text-xs h-9 shadow-lg shadow-primary/20"
-                >
-                  <Play className="w-3 h-3" /> Send to Visualizer
-                </Button>
-                <Button 
-                  onClick={() => useAppStore.getState().setActiveTab('program-map')} 
-                  variant="default" 
-                  className="w-full gap-2 text-xs h-9 shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  <FolderTree className="w-3 h-3" /> Send to Program Map
-                </Button>
-                <Button 
-                  onClick={() => useAppStore.getState().setActiveTab('audit')} 
-                  variant="default" 
-                  className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <ShieldAlert className="w-3 h-3" /> Send to Auditor
-                </Button>
-                <Button 
-                  onClick={downloadZip} 
-                  variant="secondary" 
-                  className="w-full gap-2 text-xs h-9"
-                  disabled={!scrapeText}
-                >
-                  <Download className="w-3 h-3" /> Download ZIP Bundle
-                </Button>
-                <div className="flex gap-3">
+              <div className="pt-4 border-t border-border/50 grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    onClick={() => useAppStore.getState().setActiveTab('visualizer')} 
+                    variant="default" 
+                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-primary/20 text-black font-bold"
+                  >
+                    <Play className="w-3 h-3" /> Send to Visualizer
+                  </Button>
+                  <Button 
+                    onClick={() => useAppStore.getState().setActiveTab('program-map')} 
+                    variant="default" 
+                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-700 text-black font-bold"
+                  >
+                    <FolderTree className="w-3 h-3" /> Send to Program Map
+                  </Button>
+                  <Button 
+                    onClick={() => useAppStore.getState().setActiveTab('audit')} 
+                    variant="default" 
+                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-black font-bold"
+                  >
+                    <ShieldAlert className="w-3 h-3" /> Send to Auditor
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    onClick={downloadZip} 
+                    variant="secondary" 
+                    className="w-full gap-2 text-xs h-9 text-black font-bold"
+                    disabled={!scrapeText}
+                  >
+                    <Download className="w-3 h-3" /> Download ZIP Bundle
+                  </Button>
                   <Button 
                     onClick={() => downloadFile('MAP.txt', mapText)} 
-                    variant="outline" 
-                    className="w-full gap-2 text-xs h-9 bg-background/50"
+                    variant="secondary" 
+                    className="w-full gap-2 text-xs h-9 text-black font-bold"
                     disabled={!mapText}
                   >
-                    <Download className="w-3 h-3" /> Map
+                    <Download className="w-3 h-3" /> Download Map
                   </Button>
                   <Button 
                     onClick={() => downloadFile('EVERYTHING.LOG', scrapeText)} 
-                    variant="outline" 
-                    className="w-full gap-2 text-xs h-9 bg-background/50"
+                    variant="secondary" 
+                    className="w-full gap-2 text-xs h-9 text-black font-bold"
                     disabled={!scrapeText}
                   >
-                    <Download className="w-3 h-3" /> Scrape
+                    <Download className="w-3 h-3" /> Download Scrape
                   </Button>
                 </div>
               </div>
