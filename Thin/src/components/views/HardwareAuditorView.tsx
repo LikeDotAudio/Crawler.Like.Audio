@@ -152,6 +152,8 @@ export function HardwareAuditorView() {
       setUsbLogs(prev => [...prev, `[STREAM-ERROR] ${err.message}`]);
       if (err.message.includes('Access denied')) {
         setUsbLogs(prev => [...prev, `[HINT] The OS kernel currently owns Interface 0. You must detach the kernel driver or use a device without OS drivers.`]);
+      } else if (err.message.includes('protected class')) {
+        setUsbLogs(prev => [...prev, `[HINT] WebUSB blocks access to HID (Keyboard/Mouse), Audio/MIDI, Video, and Mass Storage devices for security. Try the Web MIDI API instead for MIDI devices!`]);
       }
     }
   };

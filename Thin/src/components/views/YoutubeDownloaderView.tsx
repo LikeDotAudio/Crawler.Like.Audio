@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export function YoutubeDownloaderView() {
   const [url, setUrl] = useState("");
   const [type, setType] = useState<"video" | "audio">("video");
-  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [isPreparing, setIsPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleDownload = async () => {
@@ -20,9 +20,14 @@ export function YoutubeDownloaderView() {
     }
 
     setError(null);
-    const format = type === "video" ? "1080" : "mp3";
-    // Using an awesome free downloader widget that bypasses CORS natively!
-    setIframeUrl(`https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=${format}&color=0ea5e9`);
+    setIsPreparing(true);
+    
+    // Some iframe widgets block framing randomly, so we redirect securely in a new tab
+    // Cobalt is an excellent open-source, ad-free downloader.
+    setTimeout(() => {
+        window.open(`https://cobalt.tools/?u=${encodeURIComponent(url)}`, "_blank");
+        setIsPreparing(false);
+    }, 800);
   };
 
   return (
@@ -48,7 +53,7 @@ export function YoutubeDownloaderView() {
             <input
               type="text"
               value={url}
-              onChange={(e) => { setUrl(e.target.value); setIframeUrl(null); }}
+              onChange={(e) => setUrl(e.target.value)}
               placeholder="https://www.youtube.com/watch?v=..."
               className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-lg px-4 py-4 pl-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
             />
@@ -60,7 +65,7 @@ export function YoutubeDownloaderView() {
           <label className="text-sm font-semibold text-slate-300 ml-1 uppercase tracking-wider">Format</label>
           <div className="grid grid-cols-2 gap-4">
             <div 
-              onClick={() => { setType("video"); setIframeUrl(null); }}
+              onClick={() => setType("video")}
               className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-3 transition-all ${
                 type === "video" 
                 ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.2)]' 
@@ -77,7 +82,7 @@ export function YoutubeDownloaderView() {
             </div>
 
             <div 
-              onClick={() => { setType("audio"); setIframeUrl(null); }}
+              onClick={() => setType("audio")}
               className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-3 transition-all ${
                 type === "audio" 
                 ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.2)]' 
@@ -103,27 +108,27 @@ export function YoutubeDownloaderView() {
         )}
 
         <div className="pt-4 mt-auto border-t border-slate-800/50">
-          {iframeUrl ? (
-            <div className="w-full h-[60px] rounded-xl overflow-hidden shadow-2xl relative bg-slate-950 border border-slate-800">
-              <iframe 
-                src={iframeUrl} 
-                style={{ width: '100%', height: '60px', border: '0', overflow: 'hidden' }} 
-                scrolling="no" 
-                title="Download Widget"
-              />
-            </div>
-          ) : (
-            <Button
-              onClick={handleDownload}
-              disabled={!url}
-              className={`w-full py-6 text-lg font-bold rounded-xl flex items-center justify-center gap-3 transition-all bg-primary hover:bg-primary/90 text-[#0a2540] shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:scale-[1.02]`}
-            >
-              <Download className="w-6 h-6" />
-              Prepare {type === 'video' ? 'Movie' : 'Audio'} Download
-            </Button>
-          )}
+          <Button
+            onClick={handleDownload}
+            disabled={!url || isPreparing}
+            className={`w-full py-6 text-lg font-bold rounded-xl flex items-center justify-center gap-3 transition-all ${
+              isPreparing ? 'bg-slate-800 text-slate-400' : 'bg-primary hover:bg-primary/90 text-[#0a2540] shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:scale-[1.02]'
+            }`}
+          >
+            {isPreparing ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                Redirecting...
+              </>
+            ) : (
+              <>
+                <Download className="w-6 h-6" />
+                Download {type === 'video' ? 'Movie' : 'Audio'}
+              </>
+            )}
+          </Button>
           <p className="text-center text-xs text-slate-500 mt-4">
-            Downloads are processed entirely through a secure third-party CORS-proxy widget natively in your browser. No backend server required!
+            Downloads are processed via Cobalt, an open-source, ad-free proxy. No backend server required!
           </p>
         </div>
 
