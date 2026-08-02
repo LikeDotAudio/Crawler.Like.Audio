@@ -3,7 +3,7 @@
 import { useAppStore, extensionEmojiMap } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderSearch, Play, Square, FileText, Download, ShieldAlert } from 'lucide-react';
+import { FolderSearch, Play, Square, FileText, Download, ShieldAlert, FolderTree } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
 import { astParser } from '@/lib/astParser';
@@ -14,7 +14,6 @@ export function CrawlerView() {
   const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, recentFolders, addRecentFolder, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
   const [mounted, setMounted] = useState(false);
-  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -305,8 +304,7 @@ export function CrawlerView() {
         <p className="text-muted-foreground mt-1">Configure and monitor your local file system analysis.</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1 shadow-md border-border/50 bg-card/80 backdrop-blur-sm">
+      <Card className="shadow-md border-border/50 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
               <FolderSearch className="w-5 h-5" /> Configuration
@@ -372,6 +370,13 @@ export function CrawlerView() {
                   <Play className="w-3 h-3" /> Send to Visualizer
                 </Button>
                 <Button 
+                  onClick={() => useAppStore.getState().setActiveTab('program-map')} 
+                  variant="default" 
+                  className="w-full gap-2 text-xs h-9 shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <FolderTree className="w-3 h-3" /> Send to Program Map
+                </Button>
+                <Button 
                   onClick={() => useAppStore.getState().setActiveTab('audit')} 
                   variant="default" 
                   className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -435,47 +440,29 @@ export function CrawlerView() {
           </CardContent>
         </Card>
         
-        <Card className="md:col-span-2 shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[520px]">
-          <CardHeader className="border-b border-border/50 bg-muted/30 pb-0">
-            <div className="flex gap-6">
-              <button 
-                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${!showMap ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                onClick={() => setShowMap(false)}
-              >
-                <div className="flex items-center gap-2"><FileText className="w-4 h-4" /> Console Output</div>
-              </button>
-              <button 
-                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${showMap ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                onClick={() => setShowMap(true)}
-              >
-                <div className="flex items-center gap-2"><FolderSearch className="w-4 h-4" /> Program Map</div>
-              </button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-hidden relative">
-            {!showMap ? (
-              <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm absolute inset-0">
-                {crawlLogs.length === 0 ? (
-                  <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">Waiting for process to start...</div>
-                ) : (
-                  crawlLogs.map((log, i) => (
-                    <div key={i} className={`mb-1 ${log.message.includes('[ERROR]') ? 'text-red-400' : log.message.includes('[SUCCESS]') ? 'text-green-400' : log.message.includes('[WARN]') ? 'text-yellow-400' : 'text-slate-300'}`}>
-                      <span className="opacity-50 mr-2">{log.timestamp}</span>
-                      {log.message}
-                    </div>
-                  ))
-                )}
-              </div>
-            ) : (
-              <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm absolute inset-0 whitespace-pre text-green-400/90">
-                {mapText ? mapText : <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">No map generated yet. Run a crawl first.</div>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      
       <FileTypeSelector />
+      
+      <Card className="shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[400px]">
+        <CardHeader className="border-b border-border/50 bg-muted/30 py-3">
+          <CardTitle className="flex items-center gap-2 text-sm font-medium">
+            <FileText className="w-4 h-4" /> Console Output
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 flex-1 overflow-hidden relative">
+          <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm absolute inset-0">
+            {crawlLogs.length === 0 ? (
+              <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">Waiting for process to start...</div>
+            ) : (
+              crawlLogs.map((log, i) => (
+                <div key={i} className={`mb-1 ${log.message.includes('[ERROR]') ? 'text-red-400' : log.message.includes('[SUCCESS]') ? 'text-green-400' : log.message.includes('[WARN]') ? 'text-yellow-400' : 'text-slate-300'}`}>
+                  <span className="opacity-50 mr-2">{log.timestamp}</span>
+                  {log.message}
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

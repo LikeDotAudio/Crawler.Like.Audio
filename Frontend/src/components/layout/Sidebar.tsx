@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@ export function Sidebar() {
   const tabs = [
     { id: 'crawler', label: 'File Crawler', icon: Search },
     { id: 'visualizer', label: 'Visual Explorer', icon: NetworkIcon },
+    { id: 'program-map', label: 'Program Map', icon: FolderTree },
     { id: 'audit', label: 'Project Audit', icon: ShieldAlert },
     { id: 'hardware', label: 'Hardware Auditor', icon: Cpu },
     { id: 'network', label: 'Network Sweeper', icon: Wifi },
