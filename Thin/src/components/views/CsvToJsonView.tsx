@@ -167,7 +167,7 @@ export function CsvToJsonView() {
 
   const buildHierarchy = (rows: any[], parentKey: string): any[] => {
     const levelConfigs = Object.values(configs)
-      .filter((c) => c.nestedUnder === parentKey && c.role !== "Skip" && c.role !== "Skip ")
+      .filter((c) => c.nestedUnder === parentKey && c.role !== "Skip")
       .sort((a, b) => headers.indexOf(a.originalHeader) - headers.indexOf(b.originalHeader));
 
     const firstGroupingConfig = levelConfigs.find((c) =>
