@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml, Music } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -37,6 +37,12 @@ export function Sidebar() {
         { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
         { id: 'csv-to-json', label: 'CSV Importer & Shuffler', icon: Table },
         { id: 'json-to-csv', label: 'JSON Importer & Shuffler', icon: FileJson },
+      ]
+    },
+    {
+      title: 'Media Conversion',
+      tabs: [
+        { id: 'audio-converter', label: 'Audio Converter', icon: Music },
       ]
     }
   ] as const;

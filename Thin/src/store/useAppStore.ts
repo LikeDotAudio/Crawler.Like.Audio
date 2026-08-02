@@ -20,8 +20,8 @@ export interface FileCategory {
 }
 
 interface AppState {
-  activeTab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print';
-  setActiveTab: (tab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print') => void;
+  activeTab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter';
+  setActiveTab: (tab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter') => void;
   
   // Crawler State
   selectedFolder: string | null;
