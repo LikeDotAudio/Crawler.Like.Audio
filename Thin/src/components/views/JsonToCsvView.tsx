@@ -5,7 +5,7 @@ import Papa from "papaparse";
 import * as jsyaml from "js-yaml";
 import { json2xml } from "xml-js";
 import * as XLSX from "xlsx";
-import { Upload, FileCode2, Download, TableProperties, CodeXml, LayoutList, Table } from "lucide-react";
+import { Upload, FileCode2, Download, TableProperties, CodeXml, LayoutList, Table, FileJson } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function JsonToCsvView() {
