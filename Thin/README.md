@@ -14,7 +14,6 @@ Crawler.like.audio is a powerful, browser-based multi-tool built with Next.js, R
 
 ### 🌐 Web & Generation
 - **Web Scraper:** A powerful browser-side web scraping tool for extracting DOM data and content directly from URLs.
-- **Media Link Downloader:** Paste any YouTube URL and download it natively! Powered by a Next.js API route integrating `yt-dlp` (`youtube-dl-exec`), you can instantly save videos as high-quality **MP4 Movies** or **MP3 Audio Only** streams directly to your machine.
 
 ### 🔄 Data & Document Conversion
 - **PDF to MD:** Convert dense PDF documents into clean, readable Markdown formats using `pdf.js` and `turndown`.

@@ -49,11 +49,6 @@ A lightweight utility for converting websites to text.
 * Enter any public URL, and the scraper will fetch the raw HTML.
 * It then uses client-side parsing (Turndown) to strip away the noise and convert the webpage directly into clean, readable Markdown.
 
-### 9. 🎬 Media Link Downloader
-A secure downloader that integrates Next.js API routes with `yt-dlp` (`youtube-dl-exec`).
-* Paste a YouTube link and download it natively.
-* Seamlessly extracts streams as high-quality **MP4 Movies** or **MP3 Audio Only** files saved directly to your machine.
-
 ### 10. 📄 PDF to MD
 A local document extraction tool.
 * Drag and drop any PDF file directly into the browser.

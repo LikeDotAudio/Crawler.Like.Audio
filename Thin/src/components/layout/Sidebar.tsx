@@ -23,7 +23,6 @@ export function Sidebar() {
       title: 'Web & Generation',
       tabs: [
         { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
-        { id: 'youtube-downloader', label: 'Media Link Downloader', icon: PlayCircle },
       ]
     },
     {
