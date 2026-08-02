@@ -76,7 +76,7 @@ export function AuditView() {
         } else if (entry.kind === 'file') {
           filesScanned++;
           
-          if (auditType === 'secrets') {
+          if (auditType === 'secrets' || auditType === 'all') {
             // Very basic secret scanning heuristics
             const suspiciousNames = ['.env', 'credentials', 'secret', 'id_rsa'];
             if (suspiciousNames.some(name => entry.name.toLowerCase().includes(name))) {
@@ -100,7 +100,7 @@ export function AuditView() {
             }
           }
           
-          if (auditType === 'endpoints') {
+          if (auditType === 'endpoints' || auditType === 'all') {
             const ext = entry.name.split('.').pop()?.toLowerCase();
             if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php'].includes(ext || '')) {
               try {
@@ -149,10 +149,19 @@ export function AuditView() {
       <div className="flex gap-4">
         <div className="w-1/3 space-y-4">
           <Card className="shadow-md border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-primary text-base">
                 <FolderSearch className="w-5 h-5" /> Target Selection
               </CardTitle>
+              <Button 
+                size="sm"
+                onClick={() => runAudit('all')}
+                disabled={isAuditing || !dirHandle}
+                className="h-8 gap-2 shadow-sm"
+              >
+                {isAuditing && activeAudit === 'all' ? <Play className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />}
+                Run All
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="flex gap-2">
