@@ -13,6 +13,7 @@
     "@xyflow/react": "^12.11.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "d3-hierarchy": "^3.1.2",
     "framer-motion": "^12.43.0",
     "ignore": "^7.0.6",
     "js-yaml": "^5.2.3",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
