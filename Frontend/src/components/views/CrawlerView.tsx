@@ -11,7 +11,7 @@ import ignore from 'ignore';
 import JSZip from 'jszip';
 
 export function CrawlerView() {
-  const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, recentFolders, addRecentFolder, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
+  const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
   const [mounted, setMounted] = useState(false);
 
@@ -26,7 +26,7 @@ export function CrawlerView() {
     }
     
     if (targetPath) {
-      addRecentFolder(targetPath);
+      // Intentionally omitting addRecentFolder since recent paths were removed.
     }
     
     setIsCrawling(true);
@@ -245,7 +245,6 @@ export function CrawlerView() {
         setDirHandle(handle);
         setTargetPath(handle.name);
         setSelectedFolder(handle.name);
-        addRecentFolder(handle.name);
         
         // Wipe previous crawl data so buttons disappear
         useAppStore.getState().setMapText('');
@@ -316,7 +315,6 @@ export function CrawlerView() {
               <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Target Path</label>
               <div className="flex gap-2">
                 <input 
-                  list="recent-folders"
                   type="text" 
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors" 
                   placeholder="/path/to/project"
@@ -327,11 +325,6 @@ export function CrawlerView() {
                   }}
                   disabled={isCrawling}
                 />
-                <datalist id="recent-folders">
-                  {mounted && recentFolders.map((folder, i) => (
-                    <option key={i} value={folder} />
-                  ))}
-                </datalist>
                 <Button 
                   type="button" 
                   variant="secondary" 
@@ -412,32 +405,6 @@ export function CrawlerView() {
                   >
                     <Download className="w-3 h-3" /> Download Scrape
                   </Button>
-                </div>
-              </div>
-            )}
-
-            {mounted && recentFolders.length > 0 && (
-              <div className="pt-6 border-t border-border/50">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Recent Paths</h3>
-                <div className="space-y-2">
-                  {recentFolders.slice(0, 5).map((folder, i) => (
-                    <div 
-                      key={i} 
-                      onClick={() => {
-                        setTargetPath(folder);
-                        setSelectedFolder(folder);
-                        setDirHandle(null); // Force re-prompting for File System API
-                        useAppStore.getState().setMapText('');
-                        useAppStore.getState().setScrapeText('');
-                        useAppStore.getState().setGraphData(null);
-                      }}
-                      className="text-xs p-2 rounded-md bg-muted/30 hover:bg-primary/20 hover:text-primary cursor-pointer truncate transition-colors border border-transparent hover:border-primary/30 flex items-center gap-2"
-                      title={folder}
-                    >
-                      <FolderSearch className="w-3 h-3 opacity-50" />
-                      {folder}
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
