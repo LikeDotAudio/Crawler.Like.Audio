@@ -3,7 +3,7 @@
 import { useAppStore, extensionEmojiMap } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderSearch, Play, Square, FileText, Download } from 'lucide-react';
+import { FolderSearch, Play, Square, FileText, Download, ShieldAlert } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
 import { astParser } from '@/lib/astParser';
@@ -372,6 +372,13 @@ export function CrawlerView() {
                   className="w-full gap-2 text-xs h-9 shadow-lg shadow-primary/20"
                 >
                   <Play className="w-3 h-3" /> Send to Visualizer
+                </Button>
+                <Button 
+                  onClick={() => useAppStore.getState().setActiveTab('audit')} 
+                  variant="default" 
+                  className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <ShieldAlert className="w-3 h-3" /> Send to Auditor
                 </Button>
                 <Button 
                   onClick={downloadZip} 
