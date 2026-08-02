@@ -1,9 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Usb, Plus, AlertCircle, Bluetooth, Cpu, Camera } from 'lucide-react';
+import { Usb, Plus, AlertCircle, Bluetooth, Cpu, Camera, Play, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function HardwareAuditorView() {
   const [usbDevices, setUsbDevices] = useState<any[]>([]);
@@ -14,6 +14,9 @@ export function HardwareAuditorView() {
   
   const [selectedUsb, setSelectedUsb] = useState<any | null>(null);
   const [usbLogs, setUsbLogs] = useState<string[]>([]);
+  
+  const [isStreaming, setIsStreaming] = useState(false);
+  const streamActive = useRef(false);
 
   const loadMediaDevices = async () => {
     try {
@@ -102,6 +105,63 @@ export function HardwareAuditorView() {
     }
   };
 
+  const startStream = async () => {
+    if (!selectedUsb) return;
+    try {
+      if (!selectedUsb.configuration) {
+         await selectedUsb.selectConfiguration(1);
+      }
+      await selectedUsb.claimInterface(0);
+      setIsStreaming(true);
+      streamActive.current = true;
+      setUsbLogs(prev => [...prev, `[STREAM] Claimed Interface 0. Starting interrupt loop...`]);
+      
+      const iface = selectedUsb.configuration.interfaces[0].alternate;
+      const inEndpoint = iface.endpoints.find((e: any) => e.direction === 'in');
+      
+      if (!inEndpoint) {
+          setUsbLogs(prev => [...prev, `[ERROR] No IN endpoint found on Interface 0.`]);
+          setIsStreaming(false);
+          streamActive.current = false;
+          return;
+      }
+
+      const epNumber = inEndpoint.endpointNumber;
+      const size = inEndpoint.packetSize || 64;
+
+      while (streamActive.current) {
+         try {
+             // For interrupt transfer or bulk depending on endpoint
+             const result = await selectedUsb.transferIn(epNumber, size);
+             if (result.status === 'ok') {
+                 const buffer = new Uint8Array(result.data.buffer);
+                 const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+                 setUsbLogs(prev => {
+                     const newLogs = [...prev, `[STREAM-RX] ${hex}`];
+                     return newLogs.slice(-50); // limit backlog to 50 lines while streaming
+                 });
+             }
+         } catch (err: any) {
+             setUsbLogs(prev => [...prev, `[STREAM-ERROR] ${err.message}`]);
+             streamActive.current = false;
+             setIsStreaming(false);
+             break;
+         }
+      }
+    } catch (err: any) {
+      setUsbLogs(prev => [...prev, `[STREAM-ERROR] ${err.message}`]);
+      if (err.message.includes('Access denied')) {
+        setUsbLogs(prev => [...prev, `[HINT] The OS kernel currently owns Interface 0. You must detach the kernel driver or use a device without OS drivers.`]);
+      }
+    }
+  };
+
+  const stopStream = () => {
+    streamActive.current = false;
+    setIsStreaming(false);
+    setUsbLogs(prev => [...prev, `[STREAM] Stopped.`]);
+  };
+
   const handleScanBluetooth = async () => {
     try {
       if ((navigator as any).bluetooth) {
@@ -166,14 +226,27 @@ export function HardwareAuditorView() {
               <div className="absolute inset-0 bg-black/90 p-3 m-4 rounded-xl flex flex-col z-10 border border-primary/30">
                 <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/10 shrink-0">
                   <div className="font-mono text-xs text-primary font-bold">PACKET CAPTURE / DESCRIPTORS</div>
-                  <Button size="sm" variant="ghost" className="h-6 text-xs hover:bg-white/10" onClick={() => {
-                    selectedUsb.close().catch(()=>{});
-                    setSelectedUsb(null);
-                  }}>Close</Button>
+                  <div className="flex items-center gap-2">
+                    {!isStreaming ? (
+                      <Button size="sm" onClick={startStream} className="h-6 text-xs bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 gap-1">
+                        <Play className="w-3 h-3" /> Stream IN
+                      </Button>
+                    ) : (
+                      <Button size="sm" onClick={stopStream} className="h-6 text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 gap-1">
+                        <Square className="w-3 h-3" /> Stop
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" className="h-6 text-xs hover:bg-white/10" onClick={() => {
+                      streamActive.current = false;
+                      setIsStreaming(false);
+                      selectedUsb.close().catch(()=>{});
+                      setSelectedUsb(null);
+                    }}>Close</Button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-y-auto font-mono text-[10px] sm:text-xs text-green-400 leading-tight space-y-1 p-1">
                   {usbLogs.map((log, i) => (
-                    <div key={i} className={log.startsWith('[TX]') ? 'text-blue-400' : log.startsWith('[RX]') ? 'text-yellow-400' : log.startsWith('[ERROR]') ? 'text-red-400' : log.startsWith('[HINT]') ? 'text-purple-400' : 'text-green-400'}>
+                    <div key={i} className={log.startsWith('[TX]') ? 'text-blue-400' : log.startsWith('[RX]') || log.startsWith('[STREAM-RX]') ? 'text-yellow-400' : log.startsWith('[ERROR]') || log.startsWith('[STREAM-ERROR]') ? 'text-red-400' : log.startsWith('[HINT]') ? 'text-purple-400' : 'text-green-400'}>
                       {log}
                     </div>
                   ))}

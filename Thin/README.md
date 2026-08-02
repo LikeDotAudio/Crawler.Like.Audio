@@ -8,7 +8,7 @@ Crawler.like.audio is a powerful, browser-based multi-tool built with Next.js, R
 - **File Crawler:** Recursively scan local directories and aggregate code or text files into a single, comprehensive view. Perfect for feeding large codebases into AI contexts.
 - **Visual Explorer:** A beautiful, interactive node-based graph (powered by React Flow) that maps out the intricate relationships of your project's files and folders.
 - **Program Map:** A detailed hierarchical tree view of your project's architectural structure.
-- **SCOP Map (Project Scope Analyzer):** An interactive, highly-dense Treemap visualization (powered by `d3-hierarchy`). Inspired heavily by WinDirStat, it features beautiful 3D radial-gradient "cushions" allowing you to instantly visualize your project's footprint by file size and color-coded by file type.
+- **SCOPE Map (Project Scope Analyzer):** An interactive, highly-dense Treemap visualization (powered by `d3-hierarchy`). Inspired heavily by WinDirStat, it features beautiful 3D radial-gradient "cushions" allowing you to instantly visualize your project's footprint by file size and color-coded by file type.
 - **Project Audit:** Automated auditing tools for scanning codebases and identifying structural patterns.
 - **Regenerate:** A utility for modifying, regenerating, or transforming local code files.
 

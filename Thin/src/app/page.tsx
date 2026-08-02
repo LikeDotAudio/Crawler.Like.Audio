@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { CrawlerView } from '@/components/views/CrawlerView';
 import { VisualExplorerView } from '@/components/views/VisualExplorerView';
 import { ProgramMapView } from '@/components/views/ProgramMapView';
-import { ScopMapView } from '@/components/views/ScopMapView';
+import { ScopeMapView } from '@/components/views/ScopeMapView';
 import { HardwareAuditorView } from '@/components/views/HardwareAuditorView';
 import { NetworkScannerView } from '@/components/views/NetworkScannerView';
 import { WebCrawlerView } from '@/components/views/WebCrawlerView';
@@ -35,7 +35,7 @@ export default function Home() {
           {activeTab === 'crawler' && <CrawlerView />}
           { activeTab === 'visualizer' && <VisualExplorerView />}
           { activeTab === 'program-map' && <ProgramMapView />}
-          { activeTab === 'scop-map' && <ScopMapView />}
+          { activeTab === 'scope-map' && <ScopeMapView />}
           { activeTab === 'hardware' && <HardwareAuditorView />}
           {activeTab === 'network' && <NetworkScannerView />}
           {activeTab === 'web-crawler' && <WebCrawlerView />}

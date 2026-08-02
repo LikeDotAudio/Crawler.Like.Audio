@@ -35,7 +35,7 @@ const EXT_COLORS: Record<string, string> = {
   "default": "#0000ff"
 };
 
-export function ScopMapView() {
+export function ScopeMapView() {
   const [isScanning, setIsScanning] = useState(false);
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
   const [colorMode, setColorMode] = useState<"type" | "size">("type");
@@ -168,8 +168,8 @@ export function ScopMapView() {
         
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-4 border-b border-white/10 shrink-0">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3 mb-2">
-              <FolderTree className="w-8 h-8 text-primary" /> SCOP Map
+            <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <FolderTree className="w-8 h-8 text-primary" /> SCOPE Map
             </h2>
             <p className="text-muted-foreground mt-1">Project Scope Analyzer. Visualize file sizes as an interactive Treemap.</p>
           </div>

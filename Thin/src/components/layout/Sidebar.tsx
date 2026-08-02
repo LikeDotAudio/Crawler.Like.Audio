@@ -13,8 +13,8 @@ export function Sidebar() {
       tabs: [
         { id: 'crawler', label: 'File Crawler', icon: Search },
         { id: 'visualizer', label: 'Visual Explorer', icon: NetworkIcon },
-        { id: 'program-map', label: 'Program Map', icon: FolderTree },
-        { id: 'scop-map', label: 'SCOP Map', icon: Maximize },
+        { id: 'program-map', label: 'Program Map', icon: CodeXml },
+        { id: 'scope-map', label: 'SCOPE Map', icon: FolderTree },
         { id: 'audit', label: 'Project Audit', icon: ShieldAlert },
         { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
       ]

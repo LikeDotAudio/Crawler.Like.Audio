@@ -22,7 +22,7 @@ A dedicated view for analyzing the structural skeleton of your project.
 * It displays the pure, text-based directory tree (similar to the Linux `tree` command) generated during the deep crawl.
 * Perfect for getting a quick, high-level overview of where everything is located without the visual noise of the full file contents.
 
-### 4. 🔲 SCOP Map (Project Scope Analyzer)
+### 4. 🔲 SCOPE Map (Project Scope Analyzer)
 An interactive, heavily-dense Treemap visualization (powered by `d3-hierarchy`).
 * Inspired directly by WinDirStat, it features beautiful 3D radial-gradient "cushions" that perfectly pack the screen.
 * Allows you to instantly visualize your project's storage footprint by file size, color-coded vividly by file type or as a heatmap.
