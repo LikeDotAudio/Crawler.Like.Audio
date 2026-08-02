@@ -22,7 +22,7 @@ export default function Home() {
         <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-primary/5 to-transparent -z-10 pointer-events-none" />
         <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full -z-10 pointer-events-none" />
         
-        <div className="p-8 h-full max-w-7xl mx-auto">
+        <div className="p-8 min-h-full max-w-7xl mx-auto">
           {activeTab === 'crawler' && <CrawlerView />}
           {activeTab === 'visualizer' && <VisualExplorerView />}
           {activeTab === 'hardware' && <HardwareAuditorView />}
