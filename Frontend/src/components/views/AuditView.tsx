@@ -65,6 +65,8 @@ export function AuditView() {
 
     let filesScanned = 0;
     let issuesFound = 0;
+    const allFiles = new Set<string>();
+    const allImports = new Set<string>();
 
     const scanDirectory = async (handle: any, path: string) => {
       for await (const entry of handle.values()) {
@@ -120,12 +122,90 @@ export function AuditView() {
               } catch(e) {}
             }
           }
+
+          if (auditType === 'deadcode' || auditType === 'all') {
+            const ext = entry.name.split('.').pop()?.toLowerCase();
+            if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php'].includes(ext || '')) {
+              allFiles.add(entry.name);
+              try {
+                const file = await entry.getFile();
+                if (file.size < 1024 * 500) {
+                  const text = await file.text();
+                  const importMatches = text.match(/(?:import|require|include|from)[\s({]+['"]([^'"]+)['"]/gi);
+                  if (importMatches) {
+                    importMatches.forEach((m: string) => {
+                      const match = m.match(/['"]([^'"]+)['"]/);
+                      if (match && match[1]) {
+                        const basename = match[1].split('/').pop();
+                        if (basename) allImports.add(basename.split('.')[0]);
+                      }
+                    });
+                  }
+                }
+              } catch(e) {}
+            }
+          }
+
+          if (auditType === 'deps' || auditType === 'all') {
+            if (entry.name === 'package.json') {
+              try {
+                const file = await entry.getFile();
+                const text = await file.text();
+                const json = JSON.parse(text);
+                const deps = Object.keys(json.dependencies || {}).length;
+                const devDeps = Object.keys(json.devDependencies || {}).length;
+                addLog(`[DEPENDENCY] ${path}${entry.name} -> ${deps} deps, ${devDeps} devDeps`);
+                issuesFound++;
+              } catch(e) {}
+            } else if (entry.name === 'requirements.txt') {
+              try {
+                const file = await entry.getFile();
+                const text = await file.text();
+                const lines = text.split('\n').filter((l: string) => l.trim() && !l.startsWith('#')).length;
+                addLog(`[DEPENDENCY] ${path}${entry.name} -> ${lines} python packages`);
+                issuesFound++;
+              } catch(e) {}
+            }
+          }
+
+          if (auditType === 'complexity' || auditType === 'all') {
+            const ext = entry.name.split('.').pop()?.toLowerCase();
+            if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php', 'c', 'cpp', 'rs'].includes(ext || '')) {
+              try {
+                const file = await entry.getFile();
+                if (file.size < 1024 * 500) {
+                  const text = await file.text();
+                  const lines = text.split('\n').length;
+                  if (lines > 500) {
+                    addLog(`[COMPLEXITY] ${path}${entry.name} is massive! (${lines} lines)`);
+                    issuesFound++;
+                  }
+                  const complexity = (text.match(/if\s*\(|for\s*\(|while\s*\(|switch\s*\(/g) || []).length;
+                  if (complexity > 20) {
+                    addLog(`[COMPLEXITY] ${path}${entry.name} has high cyclomatic complexity (score: ${complexity})`);
+                    issuesFound++;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
         }
       }
     };
 
     await scanDirectory(dirHandle, '/');
     
+    if (auditType === 'deadcode' || auditType === 'all') {
+      const entryPoints = ['index.js', 'index.ts', 'main.js', 'main.ts', 'main.py', 'app.js', 'app.ts', 'page.tsx', 'layout.tsx'];
+      allFiles.forEach(file => {
+        const base = file.split('.')[0];
+        if (!entryPoints.includes(file) && !allImports.has(base)) {
+          addLog(`[ORPHAN] File might be unused: ${file}`);
+          issuesFound++;
+        }
+      });
+    }
+
     addLog(`[SUCCESS] Audit Complete! Scanned ${filesScanned} files. Found ${issuesFound} items of interest.`);
     setIsAuditing(false);
     setActiveAudit(null);
@@ -134,9 +214,9 @@ export function AuditView() {
   const auditModules = [
     { id: 'secrets', name: 'Secrets Scanner', icon: ShieldAlert, desc: 'Hunts for exposed API keys, passwords, and .env files.', color: 'text-red-400' },
     { id: 'endpoints', name: 'Endpoint Extractor', icon: SearchCode, desc: 'Rips through the codebase and extracts all hardcoded URLs and API endpoints.', color: 'text-blue-400' },
-    { id: 'deadcode', name: 'Orphan File Detector', icon: Ghost, desc: 'Finds files that exist but are never imported anywhere. (Coming Soon)', color: 'text-zinc-400' },
-    { id: 'deps', name: 'Dependency Auditor', icon: PackageSearch, desc: 'Summarizes external dependencies and licenses. (Coming Soon)', color: 'text-emerald-400' },
-    { id: 'complexity', name: 'Complexity Profiler', icon: Ruler, desc: 'Highlights massive functions and cyclomatic complexity. (Coming Soon)', color: 'text-purple-400' }
+    { id: 'deadcode', name: 'Orphan File Detector', icon: Ghost, desc: 'Finds files that exist but are never imported anywhere.', color: 'text-zinc-400' },
+    { id: 'deps', name: 'Dependency Auditor', icon: PackageSearch, desc: 'Summarizes external dependencies and licenses.', color: 'text-emerald-400' },
+    { id: 'complexity', name: 'Complexity Profiler', icon: Ruler, desc: 'Highlights massive functions and cyclomatic complexity.', color: 'text-purple-400' }
   ];
 
   return (
@@ -194,7 +274,7 @@ export function AuditView() {
                     size="sm" 
                     variant="outline"
                     className="h-8 gap-2 bg-background/50 hover:bg-primary/20 hover:text-primary"
-                    disabled={isAuditing || mod.desc.includes('Coming Soon')}
+                    disabled={isAuditing}
                     onClick={() => runAudit(mod.id)}
                   >
                     {isAuditing && activeAudit === mod.id ? <Play className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
@@ -225,7 +305,7 @@ export function AuditView() {
                 <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">Run an audit to view results...</div>
               ) : (
                 auditLogs.map((log, i) => (
-                  <div key={i} className={`mb-1 ${log.includes('[ALERT]') || log.includes('[ERROR]') ? 'text-red-400' : log.includes('[WARNING]') ? 'text-yellow-400' : log.includes('[SUCCESS]') ? 'text-green-400' : log.includes('[URL FOUND]') ? 'text-blue-400' : 'text-slate-300'}`}>
+                  <div key={i} className={`mb-1 ${log.includes('[ALERT]') || log.includes('[ERROR]') ? 'text-red-400' : log.includes('[WARNING]') ? 'text-yellow-400' : log.includes('[SUCCESS]') ? 'text-green-400' : log.includes('[URL FOUND]') ? 'text-blue-400' : log.includes('[ORPHAN]') ? 'text-zinc-400' : log.includes('[DEPENDENCY]') ? 'text-emerald-400' : log.includes('[COMPLEXITY]') ? 'text-purple-400' : 'text-slate-300'}`}>
                     {log}
                   </div>
                 ))
