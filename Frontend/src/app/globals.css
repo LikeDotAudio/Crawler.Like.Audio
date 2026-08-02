@@ -92,7 +92,7 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: rgb(244 144 44); /* Solar Orange */
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.28 0.01 270);
+  --secondary: rgb(44 144 244);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.28 0.01 270);
   --muted-foreground: oklch(0.708 0 0);
