@@ -31,14 +31,6 @@ export default function Home() {
           {activeTab === 'pdf-to-md' && <PdfToMdView />}
           {activeTab === 'regenerator' && <RegeneratorView />}
           {activeTab === 'audit' && <AuditView />}
-          {activeTab === 'settings' && (
-            <div className="flex items-center justify-center h-full text-muted-foreground animate-in fade-in zoom-in-95 duration-300">
-              <div className="text-center space-y-3">
-                <h2 className="text-2xl font-bold text-foreground">Settings</h2>
-                <p>Configuration options will be available here.</p>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>

@@ -15,7 +15,6 @@ export function Sidebar() {
     { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
     { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
     { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ] as const;
 
   return (
