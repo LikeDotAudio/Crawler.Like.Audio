@@ -135,6 +135,28 @@ export function CrawlerView() {
     
     let mapTextBuilder = `# Program Map:\n# Created: ${new Date().toLocaleString()}\n#\n`;
     let scrapeTextBuilder = `# ====================================================================================\n# EVERYTHING.LOG\n# Log started at: ${new Date().toLocaleString()}\n# ====================================================================================\n\n`;
+    let extractorTextBuilder = `# ====================================================================================\n# COMMENTS AND MARKDOWN EXTRACTION\n# Log started at: ${new Date().toLocaleString()}\n# ====================================================================================\n\n`;
+
+    const extractCommentsAndMarkdown = (text: string, ext: string, path: string, entryName: string) => {
+      let extracted = '';
+      if (['.js', '.jsx', '.ts', '.tsx', '.java', '.c', '.cpp', '.cs', '.go'].includes(ext)) {
+        const matches = text.match(/(\/\*[\s\S]*?\*\/|\/\/.*$)/gm);
+        if (matches) extracted = matches.join('\n');
+      } else if (['.py', '.rb', '.sh', '.yaml', '.yml', '.conf'].includes(ext)) {
+        const matches = text.match(/(#.*$)/gm);
+        if (matches) extracted = matches.join('\n');
+      } else if (['.html', '.xml', '.svg'].includes(ext)) {
+        const matches = text.match(/(<!--[\s\S]*?-->)/gm);
+        if (matches) extracted = matches.join('\n');
+      } else if (ext === '.md' || ext === '.mdx' || ext === '.txt') {
+        extracted = text;
+      }
+      
+      if (extracted.trim()) {
+        return `\n\n# --- File: ${path}${entryName} ---\n${extracted}`;
+      }
+      return '';
+    };
 
     const storeState = useAppStore.getState();
     const selectedExts = new Set(
@@ -229,6 +251,9 @@ export function CrawlerView() {
                   const text = await file.text();
                   scrapeTextBuilder += `\n\n# --- File: ${path}${entry.name} ---\n`;
                   scrapeTextBuilder += text;
+                  
+                  // Extract comments and markdown
+                  extractorTextBuilder += extractCommentsAndMarkdown(text, ext, path, entry.name);
                 } catch(e) {}
               }
 
@@ -310,6 +335,7 @@ export function CrawlerView() {
       scrapeTextBuilder = mapTextBuilder + "\n\n" + "-".repeat(84) + "\n\n" + scrapeTextBuilder;
       useAppStore.getState().setMapText(mapTextBuilder);
       useAppStore.getState().setScrapeText(scrapeTextBuilder);
+      useAppStore.getState().setExtractorText(extractorTextBuilder);
       
       setIsCrawling(false);
     }
@@ -331,6 +357,7 @@ export function CrawlerView() {
         // Wipe previous crawl data so buttons disappear
         useAppStore.getState().setMapText('');
         useAppStore.getState().setScrapeText('');
+        useAppStore.getState().setExtractorText('');
         useAppStore.getState().setGraphData(null);
         
         addCrawlLog(`[INFO] Successfully granted access to directory: ${handle.name}`);
@@ -466,6 +493,20 @@ export function CrawlerView() {
                     className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-black font-bold"
                   >
                     <ShieldAlert className="w-3 h-3" /> Send to Auditor
+                  </Button>
+                  <Button 
+                    onClick={() => useAppStore.getState().setActiveTab('scope-map')} 
+                    variant="default" 
+                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-black font-bold"
+                  >
+                    <FolderTree className="w-3 h-3" /> Send to scope
+                  </Button>
+                  <Button 
+                    onClick={() => useAppStore.getState().setActiveTab('extractor')} 
+                    variant="default" 
+                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-black font-bold"
+                  >
+                    <FileText className="w-3 h-3" /> Open commend and mark down
                   </Button>
                 </div>
                 <div className="flex flex-col gap-3">

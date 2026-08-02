@@ -11,6 +11,7 @@ import { WebCrawlerView } from '@/components/views/WebCrawlerView';
 import { PdfToMdView } from '@/components/views/PdfToMdView';
 import { RegeneratorView } from '@/components/views/RegeneratorView';
 import { AuditView } from '@/components/views/AuditView';
+import { ExtractorView } from '@/components/views/ExtractorView';
 import { CsvToJsonView } from '@/components/views/CsvToJsonView';
 import { JsonToCsvView } from '@/components/views/JsonToCsvView';
 import { JsonConverterView } from '@/components/views/JsonConverterView';
@@ -41,6 +42,7 @@ export default function Home() {
           {activeTab === 'pdf-to-md' && <PdfToMdView />}
           {activeTab === 'regenerator' && <RegeneratorView />}
           {activeTab === 'audit' && <AuditView />}
+          {activeTab === 'extractor' && <ExtractorView />}
           {activeTab === 'csv-to-json' && <CsvToJsonView />}
           {activeTab === 'json-to-csv' && <JsonToCsvView />}
           {activeTab === 'json-converter' && <JsonConverterView />}

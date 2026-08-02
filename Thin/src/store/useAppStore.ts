@@ -20,8 +20,8 @@ export interface FileCategory {
 }
 
 interface AppState {
-  activeTab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map';
-  setActiveTab: (tab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map') => void;
+  activeTab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map' | 'extractor';
+  setActiveTab: (tab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map' | 'extractor') => void;
   
   // Crawler State
   selectedFolder: string | null;
@@ -51,6 +51,8 @@ interface AppState {
   setMapText: (text: string) => void;
   scrapeText: string;
   setScrapeText: (text: string) => void;
+  extractorText: string;
+  setExtractorText: (text: string) => void;
 }
 
 export const extensionEmojiMap: Record<string, string> = {
@@ -180,6 +182,8 @@ export const useAppStore = create<AppState>()(
       setMapText: (text) => set({ mapText: text }),
       scrapeText: '',
       setScrapeText: (text) => set({ scrapeText: text }),
+      extractorText: '',
+      setExtractorText: (text) => set({ extractorText: text }),
     }),
     {
       name: 'crawler-storage', // name of the item in the storage (must be unique)

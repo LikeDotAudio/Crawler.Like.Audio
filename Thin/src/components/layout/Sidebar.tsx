@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml, Music, TableProperties, Maximize, PlayCircle } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml, Music, TableProperties, Maximize, PlayCircle, FileText } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -16,6 +16,7 @@ export function Sidebar() {
         { id: 'program-map', label: 'Program Map', icon: CodeXml },
         { id: 'scope-map', label: 'SCOPE Map', icon: FolderTree },
         { id: 'audit', label: 'Project Audit', icon: ShieldAlert },
+        { id: 'extractor', label: 'Extractor', icon: FileText },
         { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
       ]
     },

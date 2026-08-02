@@ -10,6 +10,7 @@ interface TreeNode {
   value?: number;
   type?: "file" | "directory";
   extension?: string;
+  path?: string;
   children?: TreeNode[];
 }
 
@@ -41,6 +42,9 @@ export function ScopeMapView() {
   const [colorMode, setColorMode] = useState<"type" | "size">("type");
   const [showLabels, setShowLabels] = useState(true);
   const [scannedFiles, setScannedFiles] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
+  const [totalFolders, setTotalFolders] = useState(0);
+  const [hoveredNode, setHoveredNode] = useState<{ node: any, x: number, y: number } | null>(null);
 
   const handleSelectFolder = async () => {
     try {
@@ -53,12 +57,14 @@ export function ScopeMapView() {
       const root: TreeNode = {
         name: handle.name,
         type: "directory",
+        path: handle.name,
         children: []
       };
 
       let count = 0;
+      let folderCount = 0;
 
-      const scanDir = async (dirHandle: any, node: TreeNode) => {
+      const scanDir = async (dirHandle: any, node: TreeNode, currentPath: string) => {
         const children: TreeNode[] = [];
         for await (const entry of dirHandle.values()) {
           if (entry.name === '.git' || entry.name === 'node_modules') continue;
@@ -74,18 +80,21 @@ export function ScopeMapView() {
                 name: entry.name,
                 value: file.size,
                 type: "file",
-                extension: ext
+                extension: ext,
+                path: `${currentPath}/${entry.name}`
               });
             } catch (e) {
               // ignore locked files
             }
           } else if (entry.kind === "directory") {
+            folderCount++;
             const dirNode: TreeNode = {
               name: entry.name,
               type: "directory",
+              path: `${currentPath}/${entry.name}`,
               children: []
             };
-            await scanDir(entry, dirNode);
+            await scanDir(entry, dirNode, `${currentPath}/${entry.name}`);
             // Only add directory if it has files
             if (dirNode.children && dirNode.children.length > 0) {
               children.push(dirNode);
@@ -95,8 +104,11 @@ export function ScopeMapView() {
         node.children = children;
       };
 
-      await scanDir(handle, root);
+      await scanDir(handle, root, handle.name);
       setScannedFiles(count);
+      setTotalFiles(count);
+      setTotalFolders(folderCount + 1);
+
       
       // Clean up empty root
       if (root.children?.length === 0) {
@@ -219,8 +231,16 @@ export function ScopeMapView() {
 
             <div className="flex-1"></div>
             
-            <div className="text-sm font-mono text-slate-400">
-              Total Size: {formatBytes(treemapLayout?.value || 0)}
+            <div className="flex items-center gap-6 text-sm font-mono text-slate-400">
+              <div>
+                <span className="text-slate-500">Files:</span> {totalFiles}
+              </div>
+              <div>
+                <span className="text-slate-500">Folders:</span> {totalFolders}
+              </div>
+              <div className="text-primary font-bold">
+                <span className="text-slate-500 font-normal">Total Size:</span> {formatBytes(treemapLayout?.value || 0)}
+              </div>
             </div>
           </div>
         )}
@@ -260,7 +280,16 @@ export function ScopeMapView() {
               return (
                 <div
                   key={i}
-                  title={`${node.data.name}\nSize: ${formatBytes(node.data.value || 0)}`}
+                  onMouseMove={(e) => {
+                    if (isLeaf) {
+                      setHoveredNode({
+                        node,
+                        x: e.clientX,
+                        y: e.clientY
+                      });
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredNode(null)}
                   className={`absolute overflow-hidden transition-all duration-300 group ${
                     isLeaf ? 'cursor-crosshair shadow-2xl hover:z-50 hover:scale-[1.02]' : 'pointer-events-none'
                   }`}
@@ -289,6 +318,30 @@ export function ScopeMapView() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {hoveredNode && (
+          <div 
+            className="fixed z-[100] bg-slate-950/95 backdrop-blur-md border border-slate-700/50 p-4 rounded-xl shadow-2xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4 min-w-[200px]"
+            style={{ left: hoveredNode.x, top: hoveredNode.y - 15 }}
+          >
+            <div className="font-bold text-white mb-1 truncate max-w-[300px]">{hoveredNode.node.data.name}</div>
+            <div className="flex flex-col gap-1 mt-2">
+              <div className="text-xs text-slate-400 flex justify-between gap-4">
+                <span>Type:</span>
+                <span className="text-slate-200">{hoveredNode.node.data.type} {hoveredNode.node.data.extension || ''}</span>
+              </div>
+              <div className="text-xs text-slate-400 flex justify-between gap-4">
+                <span>Size:</span>
+                <span className="text-primary font-bold">{formatBytes(hoveredNode.node.data.value || 0)}</span>
+              </div>
+              {hoveredNode.node.data.path && (
+                <div className="text-[10px] text-slate-500 mt-2 break-all max-w-[300px] leading-tight">
+                  {hoveredNode.node.data.path}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
