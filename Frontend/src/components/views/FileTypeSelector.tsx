@@ -62,13 +62,13 @@ export function FileTypeSelector() {
              </div>
              
              {pieData.length > 0 ? (
-               <div className="w-full h-80 min-h-[320px] flex justify-center pb-8">
+               <div className="w-full h-96 min-h-[400px] flex justify-center pb-12">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={pieData}
-                        innerRadius={70}
-                        outerRadius={100}
+                        innerRadius={80}
+                        outerRadius={120}
                         paddingAngle={5}
                         dataKey="value"
                         stroke="none"
@@ -82,7 +82,7 @@ export function FileTypeSelector() {
                         contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', fontSize: '12px', color: '#fff' }}
                         itemStyle={{ color: '#fff' }}
                       />
-                      <Legend verticalAlign="bottom" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                      <Legend verticalAlign="bottom" wrapperStyle={{ fontSize: '12px', paddingTop: '30px' }} />
                     </PieChart>
                   </ResponsiveContainer>
                </div>
