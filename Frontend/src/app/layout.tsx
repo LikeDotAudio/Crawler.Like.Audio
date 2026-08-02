@@ -29,7 +29,7 @@ export default function RootLayout({
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col text-foreground" suppressHydrationWarning>
         <Script id="tree-sitter-loader" type="module" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             import { Parser, Language } from '/web-tree-sitter.js';

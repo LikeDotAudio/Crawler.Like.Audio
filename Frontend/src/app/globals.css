@@ -122,10 +122,25 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: linear-gradient(-45deg, #000000, #070709, #0a0a0c, #050505, #000000);
+    background-size: 400% 400%;
+    animation: slowBgGradient 45s ease infinite;
   }
   html {
     @apply font-sans;
+  }
+}
+
+@keyframes slowBgGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
