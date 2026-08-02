@@ -123,24 +123,26 @@
   }
   body {
     @apply text-foreground;
-    background: linear-gradient(-45deg, #000000, #070709, #0a0a0c, #050505, #000000);
-    background-size: 400% 400%;
-    animation: slowBgGradient 45s ease infinite;
+    background: conic-gradient(from var(--bg-angle) at 50% 50%, #000000, #070709, #0a0a0c, #050505, #000000);
+    animation: slowBgRotate 45s linear infinite;
   }
   html {
     @apply font-sans;
   }
 }
 
-@keyframes slowBgGradient {
+@property --bg-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes slowBgRotate {
   0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
+    --bg-angle: 0deg;
   }
   100% {
-    background-position: 0% 50%;
+    --bg-angle: 360deg;
   }
 }
 
