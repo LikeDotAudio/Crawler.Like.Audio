@@ -117,25 +117,32 @@ class CsvToJsonTab(ttk.Frame):
         )
         self.json_browse_button.grid(row=1, column=2, padx=5, pady=2)
 
-        tk.Label(self.top_frame, text="Root JSON Key Name:", bg=COLOR_BG_APP, fg=COLOR_TEXT_MAIN).grid(
+        tk.Label(self.top_frame, text="Select Sheet (Excel):", bg=COLOR_BG_APP, fg=COLOR_TEXT_MAIN).grid(
             row=2, column=0, sticky="W", padx=5, pady=2
+        )
+        self.sheet_var = tk.StringVar()
+        self.sheet_dropdown = ttk.Combobox(self.top_frame, textvariable=self.sheet_var, state="readonly")
+        self.sheet_dropdown.grid(row=2, column=1, sticky="W", padx=5, pady=2)
+
+        tk.Label(self.top_frame, text="Root JSON Key Name:", bg=COLOR_BG_APP, fg=COLOR_TEXT_MAIN).grid(
+            row=3, column=0, sticky="W", padx=5, pady=2
         )
         self.root_name_entry = tk.Entry(self.top_frame, width=20, bg=COLOR_BG_SURFACE, fg=COLOR_TEXT_MAIN, insertbackground=COLOR_TEXT_MAIN)
         self.root_name_entry.insert(0, "root")
-        self.root_name_entry.grid(row=2, column=1, sticky="W", padx=5, pady=2)
+        self.root_name_entry.grid(row=3, column=1, sticky="W", padx=5, pady=2)
 
         self.load_button = ttk.Button(
             self.top_frame, text="Load Headers", command=self.load_headers
         )
-        self.load_button.grid(row=3, column=0, pady=10)
+        self.load_button.grid(row=4, column=0, pady=10)
         self.preview_button = ttk.Button(
             self.top_frame, text="Preview JSON", command=self.preview_json
         )
-        self.preview_button.grid(row=3, column=1, pady=10)
+        self.preview_button.grid(row=4, column=1, pady=10)
         self.convert_button = ttk.Button(
             self.top_frame, text="Convert to JSON", command=self.convert_to_json, style="Accent.TButton"
         )
-        self.convert_button.grid(row=3, column=2, pady=10)
+        self.convert_button.grid(row=4, column=2, pady=10)
 
         self.headers_canvas.update_idletasks()
         self.headers_canvas.config(scrollregion=self.headers_canvas.bbox("all"))
@@ -143,12 +150,25 @@ class CsvToJsonTab(ttk.Frame):
     def load_csv_file(self):
         """Opens a file dialog to select the input CSV file."""
         filepath = filedialog.askopenfilename(
-            defaultextension=".csv", filetypes=[("CSV files", "*.csv")]
+            defaultextension=".csv", filetypes=[("Data files", "*.csv *.xls *.xlsx")]
         )
         if filepath:
             self.csv_path_entry.delete(0, tk.END)
             self.csv_path_entry.insert(0, filepath)
             self.csv_filepath = filepath
+            
+            if filepath.lower().endswith(('.xls', '.xlsx')):
+                try:
+                    xl = pd.ExcelFile(filepath)
+                    self.sheet_dropdown['values'] = xl.sheet_names
+                    if xl.sheet_names:
+                        self.sheet_dropdown.current(0)
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to read Excel file: {e}")
+            else:
+                self.sheet_dropdown['values'] = []
+                self.sheet_dropdown.set('')
+
             filename = os.path.basename(filepath)
             default_json_name = os.path.splitext(filename)[0] + ".json"
             self.json_path_entry.delete(0, tk.END)
@@ -179,7 +199,12 @@ class CsvToJsonTab(ttk.Frame):
             return
 
         try:
-            df = pd.read_csv(self.csv_filepath, nrows=1, keep_default_na=False)
+            if self.csv_filepath.lower().endswith(('.xls', '.xlsx')):
+                sheet = self.sheet_var.get()
+                df = pd.read_excel(self.csv_filepath, sheet_name=sheet, nrows=1)
+                df = df.fillna('')
+            else:
+                df = pd.read_csv(self.csv_filepath, nrows=1, keep_default_na=False)
             self.headers = list(df.columns)
 
             # Create a row of controls for each header
@@ -281,7 +306,12 @@ class CsvToJsonTab(ttk.Frame):
         """
 
         try:
-            df = pd.read_csv(self.csv_filepath, keep_default_na=False)
+            if self.csv_filepath.lower().endswith(('.xls', '.xlsx')):
+                sheet = self.sheet_var.get()
+                df = pd.read_excel(self.csv_filepath, sheet_name=sheet)
+                df = df.fillna('')
+            else:
+                df = pd.read_csv(self.csv_filepath, keep_default_na=False)
 
             sort_by_columns = []
             header_map = {}

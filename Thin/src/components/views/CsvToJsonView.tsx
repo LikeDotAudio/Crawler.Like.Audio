@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Papa from "papaparse";
-import { Upload, FileJson, Settings2, Play, Download, ChevronRight } from "lucide-react";
+import * as XLSX from "xlsx";
+import { Upload, FileJson, Settings2, Play, Download, ChevronRight, Table } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Role = 
@@ -28,38 +29,100 @@ export function CsvToJsonView() {
   const [rootKeyName, setRootKeyName] = useState("root");
   const [jsonOutput, setJsonOutput] = useState<any>(null);
   const [error, setError] = useState("");
+  const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [sheetNames, setSheetNames] = useState<string[]>([]);
+  const [selectedSheet, setSelectedSheet] = useState<string>("");
+
+  const loadSheetData = (wb: XLSX.WorkBook, sheetName: string) => {
+    const ws = wb.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    if (data.length > 0) {
+      const parsedHeaders = Object.keys(data[0] as any);
+      setHeaders(parsedHeaders);
+      setCsvData(data);
+
+      const newConfigs: Record<string, HeaderConfig> = {};
+      parsedHeaders.forEach((h) => {
+        newConfigs[h] = {
+          originalHeader: h,
+          jsonKey: h,
+          role: "Simple Value",
+          nestedUnder: "root",
+          partName: "parts",
+        };
+      });
+      setConfigs(newConfigs);
+      setJsonOutput(null);
+      setError("");
+    } else {
+      setError("Selected sheet is empty");
+      setHeaders([]);
+      setCsvData([]);
+    }
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const parsedHeaders = results.meta.fields || [];
-        setHeaders(parsedHeaders);
-        setCsvData(results.data);
+    if (file.name.toLowerCase().endsWith(".csv")) {
+      setWorkbook(null);
+      setSheetNames([]);
+      setSelectedSheet("");
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const parsedHeaders = results.meta.fields || [];
+          setHeaders(parsedHeaders);
+          setCsvData(results.data);
 
-        // Initialize configs
-        const newConfigs: Record<string, HeaderConfig> = {};
-        parsedHeaders.forEach((h) => {
-          newConfigs[h] = {
-            originalHeader: h,
-            jsonKey: h,
-            role: "Simple Value",
-            nestedUnder: "root",
-            partName: "parts",
-          };
-        });
-        setConfigs(newConfigs);
-        setJsonOutput(null);
-        setError("");
-      },
-      error: (err) => {
-        setError("Error parsing CSV: " + err.message);
-      },
-    });
+          const newConfigs: Record<string, HeaderConfig> = {};
+          parsedHeaders.forEach((h) => {
+            newConfigs[h] = {
+              originalHeader: h,
+              jsonKey: h,
+              role: "Simple Value",
+              nestedUnder: "root",
+              partName: "parts",
+            };
+          });
+          setConfigs(newConfigs);
+          setJsonOutput(null);
+          setError("");
+        },
+        error: (err) => {
+          setError("Error parsing CSV: " + err.message);
+        },
+      });
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const wb = XLSX.read(data, { type: "array" });
+          setWorkbook(wb);
+          setSheetNames(wb.SheetNames);
+          if (wb.SheetNames.length > 0) {
+            setSelectedSheet(wb.SheetNames[0]);
+            loadSheetData(wb, wb.SheetNames[0]);
+          } else {
+            setError("No sheets found in Excel file.");
+          }
+        } catch (err: any) {
+          setError("Error parsing Excel: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const handleSheetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const sheet = e.target.value;
+    setSelectedSheet(sheet);
+    if (workbook) {
+      loadSheetData(workbook, sheet);
+    }
   };
 
   const parentOptions = useMemo(() => {
@@ -204,9 +267,9 @@ export function CsvToJsonView() {
               <div className="absolute inset-0 bg-indigo-500/20 rounded-xl blur-lg transition-all group-hover:bg-indigo-500/40"></div>
               <div className="relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl shadow-lg transition-all border border-indigo-400/30 font-medium">
                 <Upload size={18} />
-                Upload CSV
+                Upload CSV / Excel
               </div>
-              <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+              <input type="file" accept=".csv,.xls,.xlsx" className="hidden" onChange={handleFileUpload} />
             </label>
           </div>
         </header>
@@ -214,6 +277,22 @@ export function CsvToJsonView() {
         {error && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl flex items-center gap-3">
             <span className="font-semibold">Error:</span> {error}
+          </motion.div>
+        )}
+
+        {sheetNames.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-4 rounded-xl flex items-center gap-4">
+            <Table size={18} className="text-indigo-400" />
+            <label className="text-sm text-slate-300 font-medium whitespace-nowrap">Select Sheet:</label>
+            <select
+              value={selectedSheet}
+              onChange={handleSheetChange}
+              className="bg-slate-950 border border-slate-800 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors text-slate-200"
+            >
+              {sheetNames.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </motion.div>
         )}
 
@@ -373,7 +452,7 @@ export function CsvToJsonView() {
             <div className="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center">
               <Upload size={40} className="text-indigo-400" />
             </div>
-            <h2 className="text-2xl font-semibold text-slate-200">Start by uploading a CSV file</h2>
+            <h2 className="text-2xl font-semibold text-slate-200">Start by uploading a CSV or Excel file</h2>
             <p className="text-slate-400 max-w-md">Your file is processed entirely in your browser. No data is sent to our servers.</p>
           </div>
         )}
