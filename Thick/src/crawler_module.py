@@ -8,11 +8,12 @@ from .file_processor_module import FileProcessor
 from .utils_module import debug_log, current_version, GitIgnoreMatcher
 
 class Crawler:
-    def __init__(self, target_directory, saver, allowed_extensions=None, log_callback=None):
+    def __init__(self, target_directory, saver, allowed_extensions=None, log_callback=None, extractor=None):
         self.target_directory = target_directory
         self.saver = saver
         self.allowed_extensions = allowed_extensions
         self.log_callback = log_callback
+        self.extractor = extractor
         self.current_file = os.path.basename(__file__)
         self.file_processor = FileProcessor(log_callback=log_callback)
         self.gitignore_matcher = GitIgnoreMatcher(target_directory)
@@ -145,6 +146,10 @@ class Crawler:
                                 f"#####################################\n"
                                 f"{content}\n\n"
                             )
+                            
+                            if self.extractor:
+                                self.extractor.extract_from_file(file_path, relative_path)
+                                
                         except Exception as e:
                             if self.log_callback:
                                 self.log_callback(f"    ❌ Error reading {item}: {e}", "header")

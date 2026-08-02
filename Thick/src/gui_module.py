@@ -14,6 +14,7 @@ from .regenerator_module import ProjectRegenerator
 from .config_manager import ConfigManager
 from .styles import *
 from .utils_module import current_version
+from .extractor_module import CommentAndMarkdownExtractor
 
 # Import Tabs
 from .tabs.select_folder_tab import SelectFolderTab
@@ -24,6 +25,7 @@ from .tabs.WebCrawler.web_crawler_tab import WebCrawlerTab
 from .tabs.visual_explorer import VisualExplorerTab
 from .tabs.usb_devices_tab import USBDevicesTab
 from .tabs.PdfToMd import PdfToMdTab
+from .tabs.csv_to_json_tab import CsvToJsonTab
 
 class FolderCrawlerApp:
     def __init__(self, root, start_directory):
@@ -122,6 +124,7 @@ class FolderCrawlerApp:
         self.tab_regen = RegenerateTab(self.notebook, self._start_regeneration)
         self.tab_usb = USBDevicesTab(self.notebook)
         self.tab_pdf = PdfToMdTab(self.notebook, self._log, self.config_manager)
+        self.tab_csv = CsvToJsonTab(self.notebook)
 
         self.notebook.add(self.tab_select, text=" 📁 1. SELECT FOLDER ")
         self.notebook.add(self.tab_files, text=" ⚙️ 2. FILE TYPES ")
@@ -131,6 +134,7 @@ class FolderCrawlerApp:
         self.notebook.add(self.tab_usb, text=" 🔍 6. USB DEVICES ")
         self.notebook.add(self.tab_web, text=" 🌐 7. WEB CRAWLER ")
         self.notebook.add(self.tab_pdf, text=" 📄 8. PDF TO MD ")
+        self.notebook.add(self.tab_csv, text=" 📊 9. CSV TO JSON ")
 
         # 3. Bottom Area for Global Actions
         bottom_frame = ttk.Frame(self.root)
@@ -238,12 +242,16 @@ class FolderCrawlerApp:
         saver = DataSaver(self.output_dir, log_callback=self._log)
         saver.open_files()
         
-        crawler = Crawler(target_dir, saver, allowed_extensions=allowed_extensions, log_callback=self._log)
+        extractor = CommentAndMarkdownExtractor(self.output_dir, log_callback=self._log)
+        extractor.open_file()
+        
+        crawler = Crawler(target_dir, saver, allowed_extensions=allowed_extensions, log_callback=self._log, extractor=extractor)
         crawler.respect_gitignore = respect_gitignore
         crawler.crawl()
         
         saver.prepend_map_to_everything()
         saver.close_files()
+        extractor.close_file()
         
         if make_zip:
             zip_output_directory(self.output_dir, log_callback=self._log)
