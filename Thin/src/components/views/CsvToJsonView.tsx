@@ -3,7 +3,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { Upload, FileJson, Settings2, Play, Download, ChevronRight, Table } from "lucide-react";
+import * as jsyaml from "js-yaml";
+import { json2xml } from "xml-js";
+import { Upload, FileJson, Settings2, Download, Table, FileCode2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Role = 
@@ -28,6 +30,9 @@ export function CsvToJsonView() {
   const [configs, setConfigs] = useState<Record<string, HeaderConfig>>({});
   const [rootKeyName, setRootKeyName] = useState("root");
   const [jsonOutput, setJsonOutput] = useState<any>(null);
+  const [yamlOutput, setYamlOutput] = useState<string>("");
+  const [xmlOutput, setXmlOutput] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"json" | "yaml" | "xml">("json");
   const [error, setError] = useState("");
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
   const [sheetNames, setSheetNames] = useState<string[]>([]);
@@ -231,18 +236,37 @@ export function CsvToJsonView() {
         [rootKeyName]: buildHierarchy(csvData, "root"),
       };
       setJsonOutput(finalJson);
+      setYamlOutput(jsyaml.dump(finalJson));
+      setXmlOutput(json2xml(JSON.stringify(finalJson), { compact: true, spaces: 4 }));
     } catch (e: any) {
-      setError("Failed to generate JSON: " + e.message);
+      setError("Failed to generate: " + e.message);
     }
   };
 
-  const downloadJson = () => {
+  const downloadOutput = () => {
     if (!jsonOutput) return;
-    const blob = new Blob([JSON.stringify(jsonOutput, null, 2)], { type: "application/json" });
+    let data = "";
+    let ext = "";
+    let type = "";
+    if (activeTab === "json") {
+      data = JSON.stringify(jsonOutput, null, 2);
+      ext = "json";
+      type = "application/json";
+    } else if (activeTab === "yaml") {
+      data = yamlOutput;
+      ext = "yaml";
+      type = "text/plain";
+    } else if (activeTab === "xml") {
+      data = xmlOutput;
+      ext = "xml";
+      type = "text/plain";
+    }
+    
+    const blob = new Blob([data], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "output.json";
+    a.download = `output.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -262,9 +286,9 @@ export function CsvToJsonView() {
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent drop-shadow-sm mb-2">
-              CSV to JSON Converter
+              CSV Importer & Shuffler
             </h1>
-            <p className="text-slate-400">Transform tabular data into rich, nested JSON structures with ease.</p>
+            <p className="text-slate-400">Import tabular data and shuffle it into JSON, YAML, or XML.</p>
           </div>
           
           <div className="flex items-center gap-4">
@@ -422,16 +446,33 @@ export function CsvToJsonView() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col w-full">
               <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-xl flex flex-col h-[700px]">
                 <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 text-purple-300">
-                    <FileJson size={18} /> JSON Output
-                  </h3>
+                  <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
+                    <button 
+                      onClick={() => setActiveTab('json')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'json' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      JSON
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('yaml')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'yaml' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      YAML
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('xml')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'xml' ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      XML
+                    </button>
+                  </div>
                   <div className="flex gap-3">
                     {jsonOutput && (
                       <button 
-                        onClick={downloadJson}
+                        onClick={downloadOutput}
                         className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       >
-                        <Download size={14} /> Download
+                        <Download size={14} /> Download {activeTab.toUpperCase()}
                       </button>
                     )}
                   </div>
@@ -440,12 +481,14 @@ export function CsvToJsonView() {
                 <div className="p-4 flex-1 overflow-auto bg-slate-950/80 m-4 rounded-xl border border-slate-800 font-mono text-sm shadow-inner">
                   {jsonOutput ? (
                     <pre className="text-emerald-300/90 leading-relaxed">
-                      {JSON.stringify(jsonOutput, null, 2)}
+                      {activeTab === 'json' && JSON.stringify(jsonOutput, null, 2)}
+                      {activeTab === 'yaml' && yamlOutput}
+                      {activeTab === 'xml' && xmlOutput}
                     </pre>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-4">
-                      <FileJson size={48} className="opacity-20" />
-                      <p>Configure columns and click Generate to preview JSON</p>
+                      <FileCode2 size={48} className="opacity-20" />
+                      <p>Configure columns to preview output</p>
                     </div>
                   )}
                 </div>

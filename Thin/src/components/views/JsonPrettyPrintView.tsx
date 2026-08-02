@@ -10,6 +10,7 @@ export function JsonPrettyPrintView() {
   const [outputText, setOutputText] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [errorLine, setErrorLine] = useState<number | null>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -23,6 +24,7 @@ export function JsonPrettyPrintView() {
         formatJson(text);
       } catch (err: any) {
         setError("Error reading file: " + err.message);
+        setErrorLine(null);
       }
     };
     reader.readAsText(file);
@@ -33,6 +35,7 @@ export function JsonPrettyPrintView() {
       if (!text.trim()) {
         setOutputText("");
         setError("");
+        setErrorLine(null);
         return;
       }
       const formatted = prettyPrintJson(text);
@@ -40,8 +43,15 @@ export function JsonPrettyPrintView() {
       JSON.parse(text); 
       setOutputText(formatted);
       setError("");
+      setErrorLine(null);
     } catch (err: any) {
       setError("Invalid JSON: " + err.message);
+      const match = err.message.match(/line\s+(\d+)/i);
+      if (match) {
+        setErrorLine(parseInt(match[1], 10));
+      } else {
+        setErrorLine(null);
+      }
       setOutputText(prettyPrintJson(text)); // still try to format if we can or just show raw
     }
   };
@@ -52,12 +62,24 @@ export function JsonPrettyPrintView() {
     formatJson(text);
   };
 
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    const gutter = document.getElementById("line-gutter");
+    const highlight = document.getElementById("highlight-layer");
+    if (gutter) gutter.scrollTop = e.currentTarget.scrollTop;
+    if (highlight) {
+      highlight.scrollTop = e.currentTarget.scrollTop;
+      highlight.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
   const copyToClipboard = () => {
     if (!outputText) return;
     navigator.clipboard.writeText(outputText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const lines = inputText.split("\n");
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -91,18 +113,49 @@ export function JsonPrettyPrintView() {
 
         <div className="grid lg:grid-cols-2 gap-8">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col h-[600px]">
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-xl flex flex-col h-full">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between">
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-xl flex flex-col h-full overflow-hidden">
+              <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900 z-20">
                 <h3 className="text-lg font-semibold flex items-center gap-2 text-slate-300">
                   <FileJson size={18} /> Raw JSON Input
                 </h3>
               </div>
-              <textarea
-                value={inputText}
-                onChange={handleInputChange}
-                placeholder="Paste your raw, minified JSON here..."
-                className="flex-1 w-full bg-transparent p-4 resize-none outline-none font-mono text-sm text-slate-300 placeholder:text-slate-600"
-              />
+              
+              <div className="flex-1 flex overflow-hidden relative bg-slate-950/50">
+                <div 
+                  id="line-gutter"
+                  className="w-12 bg-slate-950/80 border-r border-slate-800 text-slate-500 font-mono text-sm text-right py-4 pr-2 select-none overflow-hidden z-10"
+                >
+                  {lines.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`leading-relaxed ${errorLine === i + 1 ? "text-red-400 font-bold bg-red-500/20 -mr-2 pr-2 border-l-2 border-red-500" : ""}`}
+                    >
+                      {i + 1}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="relative flex-1 bg-transparent">
+                  <div 
+                    id="highlight-layer"
+                    className="absolute inset-0 pointer-events-none p-4 font-mono text-sm leading-relaxed overflow-hidden whitespace-pre text-transparent"
+                  >
+                    {lines.map((line, i) => (
+                      <div key={i} className={`min-w-max ${errorLine === i + 1 ? "bg-red-500/20" : ""}`}>{line || " "}</div>
+                    ))}
+                  </div>
+                  
+                  <textarea
+                    value={inputText}
+                    onChange={handleInputChange}
+                    onScroll={handleScroll}
+                    wrap="off"
+                    placeholder="Paste your raw, minified JSON here..."
+                    className="absolute inset-0 w-full h-full bg-transparent p-4 resize-none outline-none font-mono text-sm text-slate-300 placeholder:text-slate-600 leading-relaxed whitespace-pre z-20"
+                    spellCheck="false"
+                  />
+                </div>
+              </div>
             </div>
           </motion.div>
 

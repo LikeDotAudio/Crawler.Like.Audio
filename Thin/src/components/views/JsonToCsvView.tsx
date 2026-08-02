@@ -2,12 +2,21 @@
 
 import React, { useState } from "react";
 import Papa from "papaparse";
-import { Upload, FileCode2, Play, Download, TableProperties } from "lucide-react";
+import * as jsyaml from "js-yaml";
+import { json2xml } from "xml-js";
+import * as XLSX from "xlsx";
+import { Upload, FileCode2, Download, TableProperties, CodeXml, LayoutList, Table } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function JsonToCsvView() {
   const [jsonData, setJsonData] = useState<any>(null);
   const [csvOutput, setCsvOutput] = useState<string>("");
+  const [yamlOutput, setYamlOutput] = useState<string>("");
+  const [xmlOutput, setXmlOutput] = useState<string>("");
+  const [jsonOutput, setJsonOutput] = useState<string>("");
+  const [processedData, setProcessedData] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"csv" | "excel" | "yaml" | "xml" | "json">("csv");
+  const [viewMode, setViewMode] = useState<"raw" | "table">("raw");
   const [error, setError] = useState("");
   const [flattenArrays, setFlattenArrays] = useState(true);
 
@@ -100,21 +109,54 @@ export function JsonToCsvView() {
     if (!jsonData) return;
     try {
       const processed = processJson(jsonData);
+      setProcessedData(processed);
       const csv = Papa.unparse(processed);
       setCsvOutput(csv);
+      setYamlOutput(jsyaml.dump(jsonData));
+      setXmlOutput(json2xml(JSON.stringify(jsonData), { compact: true, spaces: 4 }));
+      setJsonOutput(JSON.stringify(jsonData, null, 2));
       setError("");
     } catch (err: any) {
-      setError("Failed to convert to CSV: " + err.message);
+      setError("Failed to convert: " + err.message);
     }
   };
 
-  const downloadCsv = () => {
-    if (!csvOutput) return;
-    const blob = new Blob([csvOutput], { type: "text/csv;charset=utf-8;" });
+  const downloadOutput = () => {
+    if (activeTab === "excel") {
+      const ws = XLSX.utils.json_to_sheet(processedData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Data");
+      XLSX.writeFile(wb, "converted.xlsx");
+      return;
+    }
+
+    let data = "";
+    let ext = "";
+    let type = "";
+    if (activeTab === "csv") {
+      data = csvOutput;
+      ext = "csv";
+      type = "text/csv";
+    } else if (activeTab === "yaml") {
+      data = yamlOutput;
+      ext = "yaml";
+      type = "text/plain";
+    } else if (activeTab === "xml") {
+      data = xmlOutput;
+      ext = "xml";
+      type = "text/plain";
+    } else if (activeTab === "json") {
+      data = jsonOutput;
+      ext = "json";
+      type = "application/json";
+    }
+    
+    if (!data) return;
+    const blob = new Blob([data], { type: `${type};charset=utf-8;` });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "converted.csv";
+    a.download = `converted.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -133,9 +175,9 @@ export function JsonToCsvView() {
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-sm mb-2">
-              JSON to CSV Converter
+              JSON Importer & Shuffler
             </h1>
-            <p className="text-slate-400">Flatten nested JSON into repeating rows and tabular CSV data.</p>
+            <p className="text-slate-400">Import JSON and shuffle it into CSV, YAML, XML, or Pretty JSON.</p>
           </div>
           
           <div className="flex items-center gap-4">
@@ -192,31 +234,115 @@ export function JsonToCsvView() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
               <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-xl flex flex-col h-[650px]">
                 <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 text-emerald-300">
-                    <FileCode2 size={18} /> CSV Output
-                  </h3>
-                  <div className="flex gap-3">
-                    {csvOutput && (
+                  <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
+                    <button 
+                      onClick={() => setActiveTab('csv')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'csv' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      CSV
+                    </button>
+                    <button 
+                      onClick={() => { setActiveTab('excel'); setViewMode('table'); }}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'excel' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      Excel
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('yaml')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'yaml' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      YAML
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('xml')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'xml' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      XML
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('json')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${activeTab === 'json' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      JSON
+                    </button>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    {(activeTab === 'csv' || activeTab === 'excel') && (
+                      <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800 mr-2">
+                        <button
+                          onClick={() => setViewMode('raw')}
+                          className={`p-1.5 rounded-md transition-colors ${viewMode === 'raw' ? 'bg-slate-800 text-slate-200' : 'text-slate-500 hover:text-slate-300'}`}
+                          title="Raw Text View"
+                        >
+                          <LayoutList size={16} />
+                        </button>
+                        <button
+                          onClick={() => setViewMode('table')}
+                          className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-slate-800 text-slate-200' : 'text-slate-500 hover:text-slate-300'}`}
+                          title="Table View"
+                        >
+                          <Table size={16} />
+                        </button>
+                      </div>
+                    )}
+                    {jsonData && (
                       <button 
-                        onClick={downloadCsv}
+                        onClick={downloadOutput}
                         className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                       >
-                        <Download size={14} /> Download
+                        <Download size={14} /> Download {activeTab.toUpperCase()}
                       </button>
                     )}
                   </div>
                 </div>
                 
-                <div className="p-4 flex-1 overflow-auto bg-slate-950/80 m-4 rounded-xl border border-slate-800 font-mono text-xs shadow-inner">
-                  {csvOutput ? (
-                    <pre className="text-emerald-300/90 leading-relaxed overflow-x-auto whitespace-pre">
-                      {csvOutput.slice(0, 10000)}
-                      {csvOutput.length > 10000 ? "\n... (preview truncated)" : ""}
-                    </pre>
+                <div className={`p-4 flex-1 overflow-auto m-4 rounded-xl border border-slate-800 shadow-inner ${viewMode === 'table' && (activeTab === 'csv' || activeTab === 'excel') ? 'bg-slate-900/40' : 'bg-slate-950/80 font-mono text-xs'}`}>
+                  {jsonData ? (
+                    viewMode === 'table' && (activeTab === 'csv' || activeTab === 'excel') ? (
+                      processedData.length > 0 ? (
+                        <table className="w-full text-left text-xs text-slate-300">
+                          <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                            <tr>
+                              {Object.keys(processedData[0]).map((h) => (
+                                <th key={h} className="px-3 py-2 font-semibold whitespace-nowrap">{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/50">
+                            {processedData.slice(0, 100).map((row, i) => (
+                              <tr key={i} className="hover:bg-slate-800/30 transition-colors">
+                                {Object.keys(processedData[0]).map((h) => (
+                                  <td key={h} className="px-3 py-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-xs">{row[h] !== null && row[h] !== undefined ? String(row[h]) : ""}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p className="text-slate-500 text-center py-10">No data</p>
+                      )
+                    ) : (
+                      <pre className="text-emerald-300/90 leading-relaxed overflow-x-auto whitespace-pre">
+                        {activeTab === 'csv' && csvOutput.slice(0, 10000)}
+                        {activeTab === 'csv' && csvOutput.length > 10000 ? "\n... (preview truncated)" : ""}
+                        
+                        {activeTab === 'excel' && csvOutput.slice(0, 10000)}
+                        {activeTab === 'excel' && csvOutput.length > 10000 ? "\n... (preview truncated)" : ""}
+                        
+                        {activeTab === 'yaml' && yamlOutput.slice(0, 10000)}
+                        {activeTab === 'yaml' && yamlOutput.length > 10000 ? "\n... (preview truncated)" : ""}
+
+                        {activeTab === 'xml' && xmlOutput.slice(0, 10000)}
+                        {activeTab === 'xml' && xmlOutput.length > 10000 ? "\n... (preview truncated)" : ""}
+
+                        {activeTab === 'json' && jsonOutput.slice(0, 10000)}
+                        {activeTab === 'json' && jsonOutput.length > 10000 ? "\n... (preview truncated)" : ""}
+                      </pre>
+                    )
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-4">
-                      <TableProperties size={48} className="opacity-20" />
-                      <p>Adjust settings and click Convert to see the CSV</p>
+                      <CodeXml size={48} className="opacity-20" />
+                      <p>Upload JSON to preview outputs</p>
                     </div>
                   )}
                 </div>

@@ -50,7 +50,7 @@ export function SpiderLogo({ className = '' }: { className?: string }) {
         }
 
         .group:hover .spider-wrapper, .spider-logo-container:hover .spider-wrapper {
-          animation: panic-escape 1.2s infinite;
+          animation: panic-escape 3.2s infinite;
           transform-origin: 50px 50px;
         }
 
@@ -66,20 +66,21 @@ export function SpiderLogo({ className = '' }: { className?: string }) {
 
         @keyframes panic-escape {
           0% { transform: translate(0px, 0px) rotate(0deg); }
-          4% { transform: translate(0px, 0px) rotate(90deg); }
-          12% { transform: translate(30px, 0px) rotate(90deg); }
-          16% { transform: translate(30px, 0px) rotate(-45deg); }
-          24% { transform: translate(-20px, -30px) rotate(-45deg); }
-          28% { transform: translate(-20px, -30px) rotate(160deg); }
-          36% { transform: translate(-10px, 30px) rotate(160deg); }
-          40% { transform: translate(-10px, 30px) rotate(45deg); }
-          48% { transform: translate(20px, -25px) rotate(45deg); }
-          52% { transform: translate(20px, -25px) rotate(-90deg); }
-          60% { transform: translate(-30px, -10px) rotate(-90deg); }
-          64% { transform: translate(-30px, -10px) rotate(135deg); }
-          72% { transform: translate(0px, 0px) rotate(135deg); }
-          80% { transform: translate(0px, 0px) rotate(270deg); }
-          88% { transform: translate(0px, 0px) rotate(360deg); }
+          1.5% { transform: translate(0px, 0px) rotate(90deg); }
+          4.5% { transform: translate(30px, 0px) rotate(90deg); }
+          6% { transform: translate(30px, 0px) rotate(-45deg); }
+          9% { transform: translate(-20px, -30px) rotate(-45deg); }
+          10.5% { transform: translate(-20px, -30px) rotate(160deg); }
+          13.5% { transform: translate(-10px, 30px) rotate(160deg); }
+          15% { transform: translate(-10px, 30px) rotate(45deg); }
+          18% { transform: translate(20px, -25px) rotate(45deg); }
+          19.5% { transform: translate(20px, -25px) rotate(-90deg); }
+          22.5% { transform: translate(-30px, -10px) rotate(-90deg); }
+          24% { transform: translate(-30px, -10px) rotate(135deg); }
+          27% { transform: translate(0px, 0px) rotate(135deg); }
+          30% { transform: translate(0px, 0px) rotate(270deg); }
+          33% { transform: translate(0px, 0px) rotate(360deg); }
+          37.5% { transform: translate(0px, 0px) rotate(360deg); }
           100% { transform: translate(0px, 0px) rotate(360deg); }
         }
       `}</style>

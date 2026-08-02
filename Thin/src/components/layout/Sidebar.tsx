@@ -35,10 +35,8 @@ export function Sidebar() {
       title: 'Data Conversion',
       tabs: [
         { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
-        { id: 'csv-to-json', label: 'CSV to JSON', icon: Table },
-        { id: 'json-to-csv', label: 'JSON to CSV', icon: FileJson },
-        { id: 'json-converter', label: 'JSON to YAML/XML', icon: CodeXml },
-        { id: 'json-pretty-print', label: 'JSON Pretty Print', icon: FileJson },
+        { id: 'csv-to-json', label: 'CSV Importer & Shuffler', icon: Table },
+        { id: 'json-to-csv', label: 'JSON Importer & Shuffler', icon: FileJson },
       ]
     }
   ] as const;
