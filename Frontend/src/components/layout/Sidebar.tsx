@@ -19,12 +19,17 @@ export function Sidebar() {
 
   return (
     <div className="w-64 border-r border-border bg-card flex flex-col h-full shadow-lg z-10">
-      <div className="p-6 flex items-center gap-3 border-b border-border">
-        <div className="bg-primary/20 p-2 rounded-xl text-primary">
+      <a 
+        href="https://github.com/LikeDotAudio/Crawler.Like.Audio" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="p-6 flex items-center gap-3 border-b border-border hover:bg-accent/30 transition-colors cursor-pointer group"
+      >
+        <div className="bg-primary/20 p-2 rounded-xl text-primary group-hover:scale-110 transition-transform">
           <Hexagon className="w-6 h-6" />
         </div>
         <h1 className="font-bold text-xl tracking-tight">Crawler<span className="text-primary">.like.audio</span></h1>
-      </div>
+      </a>
       
       <nav className="flex-1 p-4 space-y-2">
         {tabs.map((tab) => {
