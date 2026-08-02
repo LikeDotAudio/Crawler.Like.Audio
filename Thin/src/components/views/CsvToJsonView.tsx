@@ -167,7 +167,7 @@ export function CsvToJsonView() {
 
   const buildHierarchy = (rows: any[], parentKey: string): any[] => {
     const levelConfigs = Object.values(configs)
-      .filter((c) => c.nestedUnder === parentKey && c.role !== "Skip")
+      .filter((c) => c.nestedUnder === parentKey && c.role !== "Skip" && c.role !== "Skip ")
       .sort((a, b) => headers.indexOf(a.originalHeader) - headers.indexOf(b.originalHeader));
 
     const firstGroupingConfig = levelConfigs.find((c) =>
@@ -181,6 +181,7 @@ export function CsvToJsonView() {
       rows.forEach((row) => {
         const node: any = {};
         simpleConfigs.forEach((c) => {
+          if (c.role === "Skip") return;
           let val = row[c.originalHeader];
           if (val !== undefined && val !== "") {
             if (val === "true" || val === "True") val = true;
@@ -236,8 +237,18 @@ export function CsvToJsonView() {
         [rootKeyName]: buildHierarchy(csvData, "root"),
       };
       setJsonOutput(finalJson);
-      setYamlOutput(jsyaml.dump(finalJson));
-      setXmlOutput(json2xml(JSON.stringify(finalJson), { compact: true, spaces: 4 }));
+      
+      try {
+        setYamlOutput(jsyaml.dump(finalJson));
+      } catch (yErr: any) {
+        setYamlOutput("# Error generating YAML: " + yErr.message);
+      }
+      
+      try {
+        setXmlOutput(json2xml(JSON.stringify(finalJson), { compact: true, spaces: 4 }));
+      } catch (xErr: any) {
+        setXmlOutput("<!-- XML Error: Keys cannot contain spaces or invalid characters -->\n" + xErr.message);
+      }
     } catch (e: any) {
       setError("Failed to generate: " + e.message);
     }
