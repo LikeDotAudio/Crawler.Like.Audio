@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export function YoutubeDownloaderView() {
   const [url, setUrl] = useState("");
   const [type, setType] = useState<"video" | "audio">("video");
-  const [isPreparing, setIsPreparing] = useState(false);
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleDownload = async () => {
@@ -20,30 +20,9 @@ export function YoutubeDownloaderView() {
     }
 
     setError(null);
-    setIsPreparing(true);
-
-    try {
-      // First, do a quick test to see if the API can resolve it (optional, but good for error handling)
-      // Since it can take a while to download, we'll just redirect to the download endpoint which triggers the attachment.
-      const downloadUrl = `/api/ytdl?url=${encodeURIComponent(url)}&type=${type}`;
-      
-      // We create a temporary anchor to trigger the download
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = ''; 
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      // We stop the spinner after a brief delay assuming the browser took over the download prompt
-      setTimeout(() => {
-        setIsPreparing(false);
-      }, 3000);
-
-    } catch (err: any) {
-      setError(err.message || "An error occurred while preparing the download.");
-      setIsPreparing(false);
-    }
+    const format = type === "video" ? "1080" : "mp3";
+    // Using an awesome free downloader widget that bypasses CORS natively!
+    setIframeUrl(`https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=${format}&color=0ea5e9`);
   };
 
   return (
@@ -69,7 +48,7 @@ export function YoutubeDownloaderView() {
             <input
               type="text"
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => { setUrl(e.target.value); setIframeUrl(null); }}
               placeholder="https://www.youtube.com/watch?v=..."
               className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-lg px-4 py-4 pl-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
             />
@@ -81,7 +60,7 @@ export function YoutubeDownloaderView() {
           <label className="text-sm font-semibold text-slate-300 ml-1 uppercase tracking-wider">Format</label>
           <div className="grid grid-cols-2 gap-4">
             <div 
-              onClick={() => setType("video")}
+              onClick={() => { setType("video"); setIframeUrl(null); }}
               className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-3 transition-all ${
                 type === "video" 
                 ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.2)]' 
@@ -98,7 +77,7 @@ export function YoutubeDownloaderView() {
             </div>
 
             <div 
-              onClick={() => setType("audio")}
+              onClick={() => { setType("audio"); setIframeUrl(null); }}
               className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-3 transition-all ${
                 type === "audio" 
                 ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary),0.2)]' 
@@ -124,27 +103,27 @@ export function YoutubeDownloaderView() {
         )}
 
         <div className="pt-4 mt-auto border-t border-slate-800/50">
-          <Button
-            onClick={handleDownload}
-            disabled={!url || isPreparing}
-            className={`w-full py-6 text-lg font-bold rounded-xl flex items-center justify-center gap-3 transition-all ${
-              isPreparing ? 'bg-slate-800 text-slate-400' : 'bg-primary hover:bg-primary/90 text-[#0a2540] shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:scale-[1.02]'
-            }`}
-          >
-            {isPreparing ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin" />
-                Processing Download...
-              </>
-            ) : (
-              <>
-                <Download className="w-6 h-6" />
-                Download {type === 'video' ? 'Movie' : 'Audio'}
-              </>
-            )}
-          </Button>
+          {iframeUrl ? (
+            <div className="w-full h-[60px] rounded-xl overflow-hidden shadow-2xl relative bg-slate-950 border border-slate-800">
+              <iframe 
+                src={iframeUrl} 
+                style={{ width: '100%', height: '60px', border: '0', overflow: 'hidden' }} 
+                scrolling="no" 
+                title="Download Widget"
+              />
+            </div>
+          ) : (
+            <Button
+              onClick={handleDownload}
+              disabled={!url}
+              className={`w-full py-6 text-lg font-bold rounded-xl flex items-center justify-center gap-3 transition-all bg-primary hover:bg-primary/90 text-[#0a2540] shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:scale-[1.02]`}
+            >
+              <Download className="w-6 h-6" />
+              Prepare {type === 'video' ? 'Movie' : 'Audio'} Download
+            </Button>
+          )}
           <p className="text-center text-xs text-slate-500 mt-4">
-            Downloads are processed locally via your server's yt-dlp backend. Large videos may take several moments to begin saving.
+            Downloads are processed entirely through a secure third-party CORS-proxy widget natively in your browser. No backend server required!
           </p>
         </div>
 
