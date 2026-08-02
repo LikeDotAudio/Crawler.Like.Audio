@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, PackageSearch, Ghost, SearchCode, Ruler, FolderSearch, Play, Download } from 'lucide-react';
 import ignore from 'ignore';
 import { useAppStore } from '@/store/useAppStore';
+import { ALL_AUDITORS } from '@/lib/audits';
+import { AuditContext } from '@/lib/audits/types';
 
 export function AuditView() {
   const { dirHandle, setDirHandle, selectedFolder, setSelectedFolder } = useAppStore();
@@ -65,8 +67,13 @@ export function AuditView() {
 
     let filesScanned = 0;
     let issuesFound = 0;
-    const allFiles = new Set<string>();
-    const allImports = new Set<string>();
+    
+    // Determine which modules to run
+    const modulesToRun = auditType === 'all' 
+      ? Object.values(ALL_AUDITORS) 
+      : [ALL_AUDITORS[auditType]].filter(Boolean);
+
+    const sharedState: Record<string, any> = {};
 
     const scanDirectory = async (handle: any, path: string) => {
       for await (const entry of handle.values()) {
@@ -78,116 +85,31 @@ export function AuditView() {
         } else if (entry.kind === 'file') {
           filesScanned++;
           
-          if (auditType === 'secrets' || auditType === 'all') {
-            // Very basic secret scanning heuristics
-            const suspiciousNames = ['.env', 'credentials', 'secret', 'id_rsa'];
-            if (suspiciousNames.some(name => entry.name.toLowerCase().includes(name))) {
-              addLog(`[WARNING] Suspicious filename found: ${path}${entry.name}`);
-              issuesFound++;
-            }
-            
-            // Check file contents if it's a code/config file
-            const ext = entry.name.split('.').pop()?.toLowerCase();
-            if (['json', 'yml', 'yaml', 'js', 'ts', 'py', 'env', 'config'].includes(ext || '')) {
-              try {
-                const file = await entry.getFile();
-                if (file.size < 1024 * 500) { // Only read small files
-                  const text = await file.text();
-                  if (/api[_-]?key/i.test(text) || /secret/i.test(text) || /password/i.test(text)) {
-                    addLog(`[ALERT] Potential hardcoded secret in: ${path}${entry.name}`);
-                    issuesFound++;
-                  }
-                }
-              } catch(e) {}
-            }
-          }
-          
-          if (auditType === 'endpoints' || auditType === 'all') {
-            const ext = entry.name.split('.').pop()?.toLowerCase();
-            if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php'].includes(ext || '')) {
-              try {
-                const file = await entry.getFile();
-                if (file.size < 1024 * 500) {
-                  const text = await file.text();
-                  // Match URLs like http:// or https:// (basic regex)
-                  const urls = text.match(/https?:\/\/[^\s"'`)]+/gi);
-                  if (urls) {
-                    const uniqueUrls = Array.from(new Set(urls));
-                    uniqueUrls.forEach(url => {
-                      addLog(`[URL FOUND] ${path}${entry.name} -> ${url}`);
-                      issuesFound++;
-                    });
-                  }
-                }
-              } catch(e) {}
-            }
-          }
+          let file: File | undefined;
+          let text: string | null = null;
+          const ext = entry.name.split('.').pop()?.toLowerCase() || '';
 
-          if (auditType === 'deadcode' || auditType === 'all') {
-            const ext = entry.name.split('.').pop()?.toLowerCase();
-            if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php'].includes(ext || '')) {
-              allFiles.add(entry.name);
-              try {
-                const file = await entry.getFile();
-                if (file.size < 1024 * 500) {
-                  const text = await file.text();
-                  const importMatches = text.match(/(?:import|require|include|from)[\s({]+['"]([^'"]+)['"]/gi);
-                  if (importMatches) {
-                    importMatches.forEach((m: string) => {
-                      const match = m.match(/['"]([^'"]+)['"]/);
-                      if (match && match[1]) {
-                        const basename = match[1].split('/').pop();
-                        if (basename) allImports.add(basename.split('.')[0]);
-                      }
-                    });
-                  }
-                }
-              } catch(e) {}
+          // Only read text for files we expect might need it, and keep it under 500kb
+          try {
+            file = await entry.getFile();
+            if (file && file.size < 1024 * 500) {
+              text = await file.text();
             }
-          }
+          } catch(e) {}
 
-          if (auditType === 'deps' || auditType === 'all') {
-            if (entry.name === 'package.json') {
-              try {
-                const file = await entry.getFile();
-                const text = await file.text();
-                const json = JSON.parse(text);
-                const deps = Object.keys(json.dependencies || {}).length;
-                const devDeps = Object.keys(json.devDependencies || {}).length;
-                addLog(`[DEPENDENCY] ${path}${entry.name} -> ${deps} deps, ${devDeps} devDeps`);
-                issuesFound++;
-              } catch(e) {}
-            } else if (entry.name === 'requirements.txt') {
-              try {
-                const file = await entry.getFile();
-                const text = await file.text();
-                const lines = text.split('\n').filter((l: string) => l.trim() && !l.startsWith('#')).length;
-                addLog(`[DEPENDENCY] ${path}${entry.name} -> ${lines} python packages`);
-                issuesFound++;
-              } catch(e) {}
-            }
-          }
+          const ctx: AuditContext = {
+            file: file as File,
+            text,
+            path,
+            entryName: entry.name,
+            ext,
+            addLog,
+            incrementIssues: () => { issuesFound++; },
+            sharedState
+          };
 
-          if (auditType === 'complexity' || auditType === 'all') {
-            const ext = entry.name.split('.').pop()?.toLowerCase();
-            if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php', 'c', 'cpp', 'rs'].includes(ext || '')) {
-              try {
-                const file = await entry.getFile();
-                if (file.size < 1024 * 500) {
-                  const text = await file.text();
-                  const lines = text.split('\n').length;
-                  if (lines > 500) {
-                    addLog(`[COMPLEXITY] ${path}${entry.name} is massive! (${lines} lines)`);
-                    issuesFound++;
-                  }
-                  const complexity = (text.match(/if\s*\(|for\s*\(|while\s*\(|switch\s*\(/g) || []).length;
-                  if (complexity > 20) {
-                    addLog(`[COMPLEXITY] ${path}${entry.name} has high cyclomatic complexity (score: ${complexity})`);
-                    issuesFound++;
-                  }
-                }
-              } catch (e) {}
-            }
+          for (const mod of modulesToRun) {
+            await mod.processFile(ctx);
           }
         }
       }
@@ -195,15 +117,21 @@ export function AuditView() {
 
     await scanDirectory(dirHandle, '/');
     
-    if (auditType === 'deadcode' || auditType === 'all') {
-      const entryPoints = ['index.js', 'index.ts', 'main.js', 'main.ts', 'main.py', 'app.js', 'app.ts', 'page.tsx', 'layout.tsx'];
-      allFiles.forEach(file => {
-        const base = file.split('.')[0];
-        if (!entryPoints.includes(file) && !allImports.has(base)) {
-          addLog(`[ORPHAN] File might be unused: ${file}`);
-          issuesFound++;
-        }
-      });
+    // Run finalizers
+    for (const mod of modulesToRun) {
+      if (mod.finalize) {
+        const ctx: AuditContext = {
+          file: null as any,
+          text: null,
+          path: '/',
+          entryName: '',
+          ext: '',
+          addLog,
+          incrementIssues: () => { issuesFound++; },
+          sharedState
+        };
+        mod.finalize(ctx);
+      }
     }
 
     addLog(`[SUCCESS] Audit Complete! Scanned ${filesScanned} files. Found ${issuesFound} items of interest.`);
