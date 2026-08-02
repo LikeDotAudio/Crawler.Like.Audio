@@ -32,6 +32,8 @@ function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
           className="bg-card border border-border rounded-lg overflow-hidden" 
           nodeColor="#f97316" 
           maskColor="oklch(0.18 0.01 270 / 50%)"
+          pannable
+          zoomable
         />
       </ReactFlow>
     </div>
