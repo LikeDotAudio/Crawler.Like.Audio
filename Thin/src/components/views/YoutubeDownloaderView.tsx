@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Youtube, Download, Film, Headphones, Loader2, AlertCircle } from "lucide-react";
+import { PlayCircle, Download, Film, Headphones, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function YoutubeDownloaderView() {
@@ -51,7 +51,7 @@ export function YoutubeDownloaderView() {
       <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-4 border-b border-white/10 shrink-0">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3 mb-2">
-            <Youtube className="w-8 h-8 text-primary" /> Media Link Downloader
+            <PlayCircle className="w-8 h-8 text-primary" /> Media Link Downloader
           </h2>
           <p className="text-muted-foreground mt-1">Download YouTube videos as high-quality MP4 movies or MP3 audio.</p>
         </div>
@@ -64,7 +64,7 @@ export function YoutubeDownloaderView() {
           <label className="text-sm font-semibold text-slate-300 ml-1 uppercase tracking-wider">YouTube URL</label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Youtube className="w-5 h-5 text-slate-500" />
+              <PlayCircle className="w-5 h-5 text-slate-500" />
             </div>
             <input
               type="text"
