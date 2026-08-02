@@ -40,9 +40,13 @@ interface AppState {
   addCrawlLog: (message: string) => void;
   clearLogs: () => void;
   
-  // Mock Data for Visualizer
   graphData: { nodes: any[]; edges: any[] } | null;
   setGraphData: (data: { nodes: any[]; edges: any[] } | null) => void;
+  
+  mapText: string;
+  setMapText: (text: string) => void;
+  scrapeText: string;
+  setScrapeText: (text: string) => void;
 }
 
 const mockFileCategories: FileCategory[] = [
@@ -143,6 +147,11 @@ export const useAppStore = create<AppState>()(
         ]
       },
       setGraphData: (data) => set({ graphData: data }),
+      
+      mapText: '',
+      setMapText: (text) => set({ mapText: text }),
+      scrapeText: '',
+      setScrapeText: (text) => set({ scrapeText: text }),
     }),
     {
       name: 'crawler-storage', // name of the item in the storage (must be unique)

@@ -3,13 +3,13 @@
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FolderSearch, Play, Square, FileText } from 'lucide-react';
+import { FolderSearch, Play, Square, FileText, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
 import { astParser } from '@/lib/astParser';
 
 export function CrawlerView() {
-  const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, recentFolders, addRecentFolder, crawlLogs, addCrawlLog } = useAppStore();
+  const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, recentFolders, addRecentFolder, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
   const [mounted, setMounted] = useState(false);
 
@@ -50,8 +50,19 @@ export function CrawlerView() {
     let graphNodes: any[] = [];
     let graphEdges: any[] = [];
     let fileLayoutIndex = 0;
+    
+    let mapTextBuilder = `# Program Map:\n# Created: ${new Date().toLocaleString()}\n#\n`;
+    let scrapeTextBuilder = `# ====================================================================================\n# EVERYTHING.LOG\n# Log started at: ${new Date().toLocaleString()}\n# ====================================================================================\n\n`;
 
-    const crawlDirectory = async (handle: any, path: string) => {
+    const storeState = useAppStore.getState();
+    const selectedExts = new Set(
+      storeState.fileCategories
+        .flatMap(cat => cat.extensions)
+        .filter(ext => ext.selected)
+        .map(ext => ext.ext)
+    );
+
+    const crawlDirectory = async (handle: any, path: string, depth = 0) => {
       // Check store state directly to allow stopping mid-crawl
       if (!useAppStore.getState().isCrawling) return;
       
@@ -61,6 +72,7 @@ export function CrawlerView() {
           
           if (entry.kind === 'file') {
             fileCount++;
+            mapTextBuilder += `${'  '.repeat(depth)}├── ${entry.name}\n`;
             
             // Periodically log progress to avoid flooding the UI
             if (fileCount % 500 === 0) {
@@ -74,6 +86,15 @@ export function CrawlerView() {
               
               const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : 'unknown';
               extCounts[ext] = (extCounts[ext] || 0) + 1;
+              
+              // If selected in file types, add to scrape text
+              if (selectedExts.has(ext)) {
+                try {
+                  const text = await file.text();
+                  scrapeTextBuilder += `\n\n# --- File: ${path}${entry.name} ---\n`;
+                  scrapeTextBuilder += text;
+                } catch(e) {}
+              }
 
               // Run AST Parsing natively in browser for python files
               if (ext === '.py' && file.size < 1024 * 500) {
@@ -131,12 +152,13 @@ export function CrawlerView() {
             }
           } else if (entry.kind === 'directory') {
             dirCount++;
+            mapTextBuilder += `${'  '.repeat(depth)}├── 📁 ${entry.name}/\n`;
             // Skip heavy directories for safety
             if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'venv') {
               addCrawlLog(`[INFO] Skipping ignored directory: ${path}${entry.name}`);
               continue;
             }
-            await crawlDirectory(entry, `${path}${entry.name}/`);
+            await crawlDirectory(entry, `${path}${entry.name}/`, depth + 1);
           }
         }
       } catch (e) {
@@ -150,6 +172,11 @@ export function CrawlerView() {
       addCrawlLog(`[SUCCESS] Deep crawl finished! Found ${fileCount} files across ${dirCount} subdirectories.`);
       addCrawlLog(`[INFO] Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB.`);
       useAppStore.getState().setGraphData({ nodes: graphNodes, edges: graphEdges });
+      
+      scrapeTextBuilder = mapTextBuilder + "\n\n" + "-".repeat(84) + "\n\n" + scrapeTextBuilder;
+      useAppStore.getState().setMapText(mapTextBuilder);
+      useAppStore.getState().setScrapeText(scrapeTextBuilder);
+      
       setIsCrawling(false);
     }
   };
@@ -175,6 +202,18 @@ export function CrawlerView() {
       console.error(err);
       addCrawlLog('[WARN] Directory selection cancelled.');
     }
+  };
+
+  const downloadFile = (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -235,6 +274,27 @@ export function CrawlerView() {
                 </Button>
               )}
             </div>
+
+            {(mapText || scrapeText) && !isCrawling && (
+              <div className="pt-4 border-t border-border/50 flex gap-3">
+                <Button 
+                  onClick={() => downloadFile('MAP.txt', mapText)} 
+                  variant="outline" 
+                  className="w-full gap-2 text-xs h-9 bg-background/50"
+                  disabled={!mapText}
+                >
+                  <Download className="w-3 h-3" /> Map
+                </Button>
+                <Button 
+                  onClick={() => downloadFile('EVERYTHING.LOG', scrapeText)} 
+                  variant="outline" 
+                  className="w-full gap-2 text-xs h-9 bg-background/50"
+                  disabled={!scrapeText}
+                >
+                  <Download className="w-3 h-3" /> Scrape
+                </Button>
+              </div>
+            )}
 
             {mounted && recentFolders.length > 0 && (
               <div className="pt-6 border-t border-border/50">
