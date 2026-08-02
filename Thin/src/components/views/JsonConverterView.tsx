@@ -61,6 +61,11 @@ export function JsonConverterView() {
     URL.revokeObjectURL(url);
   };
 
+  React.useEffect(() => {
+    convertData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jsonData]);
+
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="w-full space-y-8">
@@ -122,12 +127,6 @@ export function JsonConverterView() {
                     </button>
                   </div>
                   <div className="flex gap-3">
-                    <button 
-                      onClick={convertData}
-                      className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <Play size={14} className="text-orange-400" /> Convert
-                    </button>
                     {(activeTab === 'yaml' ? yamlOutput : xmlOutput) && (
                       <button 
                         onClick={downloadOutput}

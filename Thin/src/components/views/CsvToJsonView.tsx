@@ -249,6 +249,11 @@ export function CsvToJsonView() {
     URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    generateJson();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [csvData, configs, rootKeyName]);
+
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="w-full space-y-8">
@@ -421,12 +426,6 @@ export function CsvToJsonView() {
                     <FileJson size={18} /> JSON Output
                   </h3>
                   <div className="flex gap-3">
-                    <button 
-                      onClick={generateJson}
-                      className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      <Play size={14} className="text-emerald-400" /> Generate
-                    </button>
                     {jsonOutput && (
                       <button 
                         onClick={downloadJson}
