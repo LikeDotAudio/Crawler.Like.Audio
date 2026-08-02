@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network, Usb, Settings, Hexagon, Globe, FileType, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Hexagon, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -8,9 +8,10 @@ export function Sidebar() {
 
   const tabs = [
     { id: 'crawler', label: 'File Crawler', icon: Search },
-    { id: 'visualizer', label: 'Visual Explorer', icon: Network },
+    { id: 'visualizer', label: 'Visual Explorer', icon: NetworkIcon },
     { id: 'audit', label: 'Project Audit', icon: ShieldAlert },
-    { id: 'usb', label: 'USB Scanner', icon: Usb },
+    { id: 'hardware', label: 'Hardware Auditor', icon: Cpu },
+    { id: 'network', label: 'Network Sweeper', icon: Wifi },
     { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
     { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
     { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },

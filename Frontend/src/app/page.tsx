@@ -3,7 +3,8 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CrawlerView } from '@/components/views/CrawlerView';
 import { VisualExplorerView } from '@/components/views/VisualExplorerView';
-import { UsbScannerView } from '@/components/views/UsbScannerView';
+import { HardwareAuditorView } from '@/components/views/HardwareAuditorView';
+import { NetworkScannerView } from '@/components/views/NetworkScannerView';
 import { WebCrawlerView } from '@/components/views/WebCrawlerView';
 import { PdfToMdView } from '@/components/views/PdfToMdView';
 import { RegeneratorView } from '@/components/views/RegeneratorView';
@@ -24,7 +25,8 @@ export default function Home() {
         <div className="p-8 h-full max-w-7xl mx-auto">
           {activeTab === 'crawler' && <CrawlerView />}
           {activeTab === 'visualizer' && <VisualExplorerView />}
-          {activeTab === 'usb' && <UsbScannerView />}
+          {activeTab === 'hardware' && <HardwareAuditorView />}
+          {activeTab === 'network' && <NetworkScannerView />}
           {activeTab === 'web-crawler' && <WebCrawlerView />}
           {activeTab === 'pdf-to-md' && <PdfToMdView />}
           {activeTab === 'regenerator' && <RegeneratorView />}
