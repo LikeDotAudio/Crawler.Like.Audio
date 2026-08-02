@@ -3,9 +3,7 @@
 import React, { useState, useRef } from "react";
 import { Upload, Music, FileAudio, Download, Play, Pause, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// @ts-ignore
-import lamejs from "lamejs";
+import Script from "next/script";
 
 export function AudioConverterView() {
   const [file, setFile] = useState<File | null>(null);
@@ -102,6 +100,9 @@ export function AudioConverterView() {
   };
 
   const encodeAudioBufferToMp3 = (buffer: AudioBuffer): Int8Array => {
+    const lamejs = (window as any).lamejs;
+    if (!lamejs) throw new Error("MP3 Encoder is not loaded yet.");
+    
     const channels = buffer.numberOfChannels;
     const sampleRate = buffer.sampleRate;
     const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 192); // 192kbps
@@ -189,6 +190,7 @@ export function AudioConverterView() {
 
   return (
     <div className="w-full flex flex-col gap-6">
+      <Script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js" strategy="lazyOnload" />
       <div className="w-full space-y-8">
         
         <header className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
