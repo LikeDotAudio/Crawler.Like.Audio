@@ -11,6 +11,7 @@ export interface FileExtension {
   count: number;
   sizeMB: number;
   selected: boolean;
+  emoji?: string;
 }
 
 export interface FileCategory {
@@ -49,42 +50,62 @@ interface AppState {
   setScrapeText: (text: string) => void;
 }
 
+export const extensionEmojiMap: Record<string, string> = {
+  '.js': '📜',
+  '.php': '🐘',
+  '.py': '🐍',
+  '.sh': '🐚',
+  '.json': '📋',
+  '.sql': '🗄️',
+  '.toml': '⚙️',
+  '.yaml': '⚙️',
+  '.yml': '⚙️',
+  '.css': '🎨',
+  '.htm': '🌐',
+  '.html': '🌐',
+  '.svg': '🖼️',
+  '.ts': '📘',
+  '.tsx': '⚛️',
+  '.md': '📝',
+  '.pdf': '📕'
+};
+
 const mockFileCategories: FileCategory[] = [
   {
     name: 'PROGRAMMING',
     extensions: [
-      { ext: '.js', count: 23, sizeMB: 0.21, selected: true },
-      { ext: '.php', count: 4, sizeMB: 0.09, selected: true },
-      { ext: '.py', count: 58, sizeMB: 0.23, selected: true },
-      { ext: '.sh', count: 2, sizeMB: 0.01, selected: true },
+      { ext: '.js', count: 23, sizeMB: 0.21, selected: true, emoji: '📜' },
+      { ext: '.php', count: 4, sizeMB: 0.09, selected: true, emoji: '🐘' },
+      { ext: '.py', count: 58, sizeMB: 0.23, selected: true, emoji: '🐍' },
+      { ext: '.sh', count: 2, sizeMB: 0.01, selected: true, emoji: '🐚' },
     ]
   },
   {
     name: 'DATA & CONFIG',
     extensions: [
-      { ext: '.json', count: 50, sizeMB: 0.80, selected: true },
-      { ext: '.sql', count: 28, sizeMB: 0.15, selected: true },
-      { ext: '.toml', count: 47, sizeMB: 0.14, selected: true },
-      { ext: '.yaml', count: 21, sizeMB: 0.39, selected: true },
-      { ext: '.yml', count: 2, sizeMB: 0.03, selected: true },
+      { ext: '.json', count: 50, sizeMB: 0.80, selected: true, emoji: '📋' },
+      { ext: '.sql', count: 28, sizeMB: 0.15, selected: true, emoji: '🗄️' },
+      { ext: '.toml', count: 47, sizeMB: 0.14, selected: true, emoji: '⚙️' },
+      { ext: '.yaml', count: 21, sizeMB: 0.39, selected: true, emoji: '⚙️' },
+      { ext: '.yml', count: 2, sizeMB: 0.03, selected: true, emoji: '⚙️' },
     ]
   },
   {
     name: 'WEB & MARKUP',
     extensions: [
-      { ext: '.css', count: 5, sizeMB: 0.02, selected: true },
-      { ext: '.htm', count: 8, sizeMB: 1.50, selected: true },
-      { ext: '.html', count: 117, sizeMB: 3.71, selected: true },
-      { ext: '.svg', count: 192, sizeMB: 0.38, selected: true },
-      { ext: '.ts', count: 699, sizeMB: 4.28, selected: true },
-      { ext: '.tsx', count: 442, sizeMB: 3.34, selected: true },
+      { ext: '.css', count: 5, sizeMB: 0.02, selected: true, emoji: '🎨' },
+      { ext: '.htm', count: 8, sizeMB: 1.50, selected: true, emoji: '🌐' },
+      { ext: '.html', count: 117, sizeMB: 3.71, selected: true, emoji: '🌐' },
+      { ext: '.svg', count: 192, sizeMB: 0.38, selected: true, emoji: '🖼️' },
+      { ext: '.ts', count: 699, sizeMB: 4.28, selected: true, emoji: '📘' },
+      { ext: '.tsx', count: 442, sizeMB: 3.34, selected: true, emoji: '⚛️' },
     ]
   },
   {
     name: 'DOCS',
     extensions: [
-      { ext: '.md', count: 202, sizeMB: 1.63, selected: true },
-      { ext: '.pdf', count: 14, sizeMB: 4.55, selected: true },
+      { ext: '.md', count: 202, sizeMB: 1.63, selected: true, emoji: '📝' },
+      { ext: '.pdf', count: 14, sizeMB: 4.55, selected: true, emoji: '📕' },
     ]
   }
 ];

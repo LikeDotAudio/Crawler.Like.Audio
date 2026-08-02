@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, extensionEmojiMap } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FolderSearch, Play, Square, FileText, Download } from 'lucide-react';
@@ -22,7 +22,7 @@ export function CrawlerView() {
 
   const [dirHandle, setDirHandle] = useState<any>(null);
 
-  const handleStart = async () => {
+  const handleStart = async (respectGitIgnore: boolean = true) => {
     if (!dirHandle) {
       addCrawlLog('[WARN] You must click "Browse..." to grant the browser permission to read a local folder.');
       return;
@@ -66,13 +66,19 @@ export function CrawlerView() {
     );
 
     let ig = ignore();
-    try {
-      const gitignoreHandle = await dirHandle.getFileHandle('.gitignore');
-      const file = await gitignoreHandle.getFile();
-      const text = await file.text();
-      ig.add(text);
-      addCrawlLog('[INFO] Found and loaded .gitignore rules.');
-    } catch (e) {}
+    if (respectGitIgnore) {
+      try {
+        const gitignoreHandle = await dirHandle.getFileHandle('.gitignore');
+        const file = await gitignoreHandle.getFile();
+        const text = await file.text();
+        ig.add(text);
+        addCrawlLog('[INFO] Found and loaded .gitignore rules.');
+      } catch (e) {
+        addCrawlLog('[INFO] No .gitignore found in root directory.');
+      }
+    } else {
+      addCrawlLog('[INFO] Ignoring .gitignore rules as requested by user.');
+    }
     // Always ignore these
     ig.add(['.git', 'node_modules', 'venv', '.crawler', '.next']);
 
@@ -82,7 +88,7 @@ export function CrawlerView() {
     graphNodes.push({
       id: rootNodeId,
       position: { x: 0, y: globalTreeYIndex * 80 },
-      data: { label: `📁 ${dirHandle.name}` },
+      data: { label: `📁 ${dirHandle.name}`, depth: 0 },
       style: { background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold' }
     });
     globalTreeYIndex++;
@@ -108,17 +114,20 @@ export function CrawlerView() {
           
           if (entry.kind === 'file') {
             fileCount++;
-            mapTextBuilder += `${'  '.repeat(depth)}├── ${entry.name}\n`;
+            
+            const ext = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : 'unknown';
+            const emoji = extensionEmojiMap[ext] || '📄';
+            
+            mapTextBuilder += `${'  '.repeat(depth)}├── ${emoji} ${entry.name}\n`;
             
             if (fileCount % 500 === 0) {
               addCrawlLog(`[INFO] Scanned ${fileCount} files so far...`);
             }
             
-            // Add File Node to Graph
             graphNodes.push({
               id: currentNodeId,
               position: { x: (depth + 1) * 280, y: currentY },
-              data: { label: entry.name },
+              data: { label: `${emoji} ${entry.name}`, depth: depth + 1 },
               style: { background: '#1e293b', color: '#fff', border: '2px solid #334155', borderRadius: '8px', padding: '10px' }
             });
             graphEdges.push({
@@ -133,7 +142,7 @@ export function CrawlerView() {
               const file = await entry.getFile();
               totalSize += file.size;
               
-              const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : 'unknown';
+              // const ext is already defined above
               extCounts[ext] = (extCounts[ext] || 0) + 1;
               
               if (selectedExts.has(ext)) {
@@ -158,7 +167,7 @@ export function CrawlerView() {
                       graphNodes.push({
                         id: structId,
                         position: { x: (depth + 2) * 280, y: structY },
-                        data: { label: struct.name },
+                        data: { label: struct.name, depth: depth + 2 },
                         style: { 
                           background: struct.type === 'class' ? '#f97316' : '#0ea5e9', 
                           color: '#fff', 
@@ -193,7 +202,7 @@ export function CrawlerView() {
             graphNodes.push({
               id: currentNodeId,
               position: { x: (depth + 1) * 280, y: currentY },
-              data: { label: `📁 ${entry.name}` },
+              data: { label: `📁 ${entry.name}`, depth: depth + 1 },
               style: { background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold' }
             });
             graphEdges.push({
@@ -240,6 +249,12 @@ export function CrawlerView() {
         setTargetPath(handle.name);
         setSelectedFolder(handle.name);
         addRecentFolder(handle.name);
+        
+        // Wipe previous crawl data so buttons disappear
+        useAppStore.getState().setMapText('');
+        useAppStore.getState().setScrapeText('');
+        useAppStore.getState().setGraphData(null);
+        
         addCrawlLog(`[INFO] Successfully granted access to directory: ${handle.name}`);
       } else {
         addCrawlLog('[ERROR] Your browser does not support the File System Access API. Please use Chrome or Edge.');
@@ -332,14 +347,19 @@ export function CrawlerView() {
               </div>
             </div>
             
-            <div className="pt-4 flex gap-3">
+            <div className="pt-4 flex flex-col gap-3">
               {!isCrawling ? (
-                <Button onClick={handleStart} className="w-full gap-2 shadow-lg shadow-primary/20">
-                  <Play className="w-4 h-4" /> Start Crawl
-                </Button>
+                <>
+                  <Button onClick={() => handleStart(true)} className="w-full gap-2 shadow-lg shadow-primary/20 text-xs h-9">
+                    <Play className="w-3 h-3" /> Start Crawl (Respect .gitignore)
+                  </Button>
+                  <Button onClick={() => handleStart(false)} variant="secondary" className="w-full gap-2 text-xs h-9 border border-border/50">
+                    <Play className="w-3 h-3" /> Start Crawl (Ignore .gitignore)
+                  </Button>
+                </>
               ) : (
-                <Button onClick={handleStop} variant="destructive" className="w-full gap-2 shadow-lg shadow-destructive/20 animate-pulse">
-                  <Square className="w-4 h-4 fill-current" /> Stop Process
+                <Button onClick={handleStop} variant="destructive" className="w-full gap-2 shadow-lg shadow-destructive/20 animate-pulse text-xs h-9">
+                  <Square className="w-3 h-3 fill-current" /> Stop Process
                 </Button>
               )}
             </div>
@@ -392,6 +412,10 @@ export function CrawlerView() {
                       onClick={() => {
                         setTargetPath(folder);
                         setSelectedFolder(folder);
+                        setDirHandle(null); // Force re-prompting for File System API
+                        useAppStore.getState().setMapText('');
+                        useAppStore.getState().setScrapeText('');
+                        useAppStore.getState().setGraphData(null);
                       }}
                       className="text-xs p-2 rounded-md bg-muted/30 hover:bg-primary/20 hover:text-primary cursor-pointer truncate transition-colors border border-transparent hover:border-primary/30 flex items-center gap-2"
                       title={folder}

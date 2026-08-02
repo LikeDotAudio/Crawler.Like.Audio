@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, extensionEmojiMap } from '@/store/useAppStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -129,7 +129,7 @@ export function FileTypeSelector() {
                           htmlFor={`${category.name}-${ext.ext}`}
                           className="text-xs font-mono flex-1 cursor-pointer select-none group-hover:text-primary transition-colors flex justify-between items-center"
                         >
-                          <span className="text-foreground font-semibold">{ext.ext} <span className="text-muted-foreground font-normal">({ext.count})</span></span>
+                          <span className="text-foreground font-semibold">{extensionEmojiMap[ext.ext] || '📄'} {ext.ext} <span className="text-muted-foreground font-normal">({ext.count})</span></span>
                           <span className={`${ext.selected ? 'text-green-400' : 'text-muted-foreground'} ml-2`}>
                             [{ext.sizeMB.toFixed(2)}MB]
                           </span>
