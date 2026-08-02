@@ -52,7 +52,8 @@ export function PdfToMdView() {
   };
 
   const downloadFile = () => {
-    const blob = new Blob([output], { type: 'text/markdown' });
+    // Add UTF-8 BOM (\uFEFF) to ensure Windows Notepad reads it as UTF-8
+    const blob = new Blob(['\uFEFF' + output], { type: 'text/markdown;charset=utf-8' });
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = blobUrl;

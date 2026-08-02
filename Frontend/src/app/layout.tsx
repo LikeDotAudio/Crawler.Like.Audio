@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Crawler - System Analytics",
+  title: "Crawler.like.audio",
   description: "Modernized web interface for Crawler with Visual Explorer",
 };
 

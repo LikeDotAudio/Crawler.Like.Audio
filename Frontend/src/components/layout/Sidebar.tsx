@@ -22,7 +22,7 @@ export function Sidebar() {
         <div className="bg-primary/20 p-2 rounded-xl text-primary">
           <Hexagon className="w-6 h-6" />
         </div>
-        <h1 className="font-bold text-xl tracking-tight">Crawler<span className="text-primary">.dev</span></h1>
+        <h1 className="font-bold text-xl tracking-tight">Crawler<span className="text-primary">.like.audio</span></h1>
       </div>
       
       <nav className="flex-1 p-4 space-y-2">

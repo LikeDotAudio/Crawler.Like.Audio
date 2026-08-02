@@ -49,7 +49,7 @@ export function WebCrawlerView() {
   };
 
   const downloadFile = () => {
-    const blob = new Blob([output], { type: 'text/markdown' });
+    const blob = new Blob(['\uFEFF' + output], { type: 'text/markdown;charset=utf-8' });
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = blobUrl;
