@@ -6,7 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ArrowRight, ArrowDown } from 'lucide-react';
+import { Layers, ArrowRight, ArrowDown, FileText, FileX } from 'lucide-react';
 
 function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
   const { fitView } = useReactFlow();
@@ -45,13 +45,18 @@ export function VisualExplorerView() {
   const { graphData } = useAppStore();
   const [maxDepth, setMaxDepth] = useState<number | 'all'>('all');
   const [layoutDir, setLayoutDir] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [showFiles, setShowFiles] = useState(true);
 
   const filteredGraphData = useMemo(() => {
     if (!graphData) return null;
 
     let nodesToFilter = graphData.nodes;
     if (maxDepth !== 'all') {
-      nodesToFilter = graphData.nodes.filter((node: any) => node.data && node.data.depth <= maxDepth);
+      nodesToFilter = nodesToFilter.filter((node: any) => node.data && node.data.depth <= maxDepth);
+    }
+    
+    if (!showFiles) {
+      nodesToFilter = nodesToFilter.filter((node: any) => node.data && node.data.label.startsWith('📁'));
     }
 
     const filteredNodes = nodesToFilter.map((node: any, index: number) => ({
@@ -68,7 +73,7 @@ export function VisualExplorerView() {
     );
 
     return { nodes: filteredNodes, edges: filteredEdges };
-  }, [graphData, maxDepth, layoutDir]);
+  }, [graphData, maxDepth, layoutDir, showFiles]);
 
   return (
     <div className="w-full flex-1 flex flex-col space-y-4 animate-in fade-in zoom-in-95 duration-300">
@@ -80,6 +85,25 @@ export function VisualExplorerView() {
         
         {graphData && (
           <div className="flex gap-4">
+            <div className="flex items-center gap-2 bg-card/50 border border-border/50 rounded-lg p-1.5 shadow-sm">
+              <Button
+                variant={showFiles ? "default" : "ghost"}
+                size="sm"
+                className={`h-7 px-3 text-xs gap-2 ${showFiles ? "shadow-sm shadow-primary/20 text-black font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setShowFiles(true)}
+              >
+                <FileText className="w-3 h-3" /> Show Files
+              </Button>
+              <Button
+                variant={!showFiles ? "default" : "ghost"}
+                size="sm"
+                className={`h-7 px-3 text-xs gap-2 ${!showFiles ? "shadow-sm shadow-primary/20 text-black font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setShowFiles(false)}
+              >
+                <FileX className="w-3 h-3" /> Hide Files
+              </Button>
+            </div>
+            
             <div className="flex items-center gap-2 bg-card/50 border border-border/50 rounded-lg p-1.5 shadow-sm">
               <Button
                 variant={layoutDir === 'horizontal' ? "default" : "ghost"}
