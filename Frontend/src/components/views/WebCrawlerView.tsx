@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Globe, Download, Play, SearchCode } from 'lucide-react';
 import { useState } from 'react';
+import TurndownService from 'turndown';
 
 export function WebCrawlerView() {
   const [url, setUrl] = useState('');
@@ -33,16 +34,24 @@ export function WebCrawlerView() {
         console.log(`[Scraper] Proxy data received, contents length: ${data.contents?.length || 0}`);
         const html = data.contents;
         
-        // Basic HTML to text extraction
+        // Parse HTML and convert to clean Markdown
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Remove scripts and styles
-        doc.querySelectorAll('script, style, noscript, iframe, svg').forEach(el => el.remove());
         
-        const rawText = doc.body.textContent || '';
-        const cleanText = rawText.replace(/\s+/g, ' ').trim();
+        // Remove scripts, styles, and often noisy elements
+        doc.querySelectorAll('script, style, noscript, iframe, svg, nav, footer, header').forEach(el => el.remove());
         
-        console.log(`[Scraper] Extraction successful. Clean text length: ${cleanText.length}`);
-        setOutput(`Scraping: ${url}\n\n${cleanText}`);
+        const turndownService = new TurndownService({
+          headingStyle: 'atx',
+          codeBlockStyle: 'fenced',
+          bulletListMarker: '-',
+          hr: '---'
+        });
+        
+        // Remove empty links or useless span wrappers if needed, but Turndown is usually smart enough
+        const markdown = turndownService.turndown(doc.body);
+        
+        console.log(`[Scraper] Extraction successful. Markdown length: ${markdown.length}`);
+        setOutput(`Scraping: ${url}\n\n${markdown}`);
       } else {
         console.error(`[Scraper Error] Proxy returned status: ${response.status} ${response.statusText}`);
         setError('Failed to fetch the URL via proxy.');
