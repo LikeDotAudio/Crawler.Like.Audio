@@ -30,7 +30,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
-        <Script src="/web-tree-sitter.js" strategy="beforeInteractive" />
+        <Script id="tree-sitter-loader" type="module" strategy="beforeInteractive" dangerouslySetInnerHTML={{
+          __html: `
+            import { Parser, Language } from '/web-tree-sitter.js';
+            Parser.Language = Language;
+            window.TreeSitter = Parser;
+          `
+        }} />
         {children}
       </body>
     </html>
