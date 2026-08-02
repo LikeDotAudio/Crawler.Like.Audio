@@ -26,6 +26,8 @@ interface AppState {
   // Crawler State
   selectedFolder: string | null;
   setSelectedFolder: (folder: string | null) => void;
+  dirHandle: any | null;
+  setDirHandle: (handle: any | null) => void;
   recentFolders: string[];
   addRecentFolder: (folder: string) => void;
   
@@ -118,6 +120,9 @@ export const useAppStore = create<AppState>()(
       
       selectedFolder: null,
       setSelectedFolder: (folder) => set({ selectedFolder: folder }),
+      
+      dirHandle: null,
+      setDirHandle: (handle) => set({ dirHandle: handle }),
       
       recentFolders: [],
       addRecentFolder: (folder) => set((state) => {

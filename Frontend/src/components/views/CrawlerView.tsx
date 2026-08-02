@@ -11,7 +11,7 @@ import ignore from 'ignore';
 import JSZip from 'jszip';
 
 export function CrawlerView() {
-  const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, recentFolders, addRecentFolder, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
+  const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, recentFolders, addRecentFolder, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
   const [mounted, setMounted] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -19,8 +19,6 @@ export function CrawlerView() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const [dirHandle, setDirHandle] = useState<any>(null);
 
   const handleStart = async (respectGitIgnore: boolean = true) => {
     if (!dirHandle) {

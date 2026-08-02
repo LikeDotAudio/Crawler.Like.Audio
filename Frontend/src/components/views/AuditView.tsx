@@ -5,13 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, PackageSearch, Ghost, SearchCode, Ruler, FolderSearch, Play, Download } from 'lucide-react';
 import ignore from 'ignore';
+import { useAppStore } from '@/store/useAppStore';
 
 export function AuditView() {
+  const { dirHandle, setDirHandle, selectedFolder, setSelectedFolder } = useAppStore();
   const [isAuditing, setIsAuditing] = useState(false);
   const [activeAudit, setActiveAudit] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
-  const [targetPath, setTargetPath] = useState('');
-  const [dirHandle, setDirHandle] = useState<any>(null);
 
   const addLog = (msg: string) => {
     setAuditLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -22,7 +22,7 @@ export function AuditView() {
       if ((window as any).showDirectoryPicker) {
         const handle = await (window as any).showDirectoryPicker();
         setDirHandle(handle);
-        setTargetPath(handle.name);
+        setSelectedFolder(handle.name);
         setAuditLogs([]);
         addLog(`[INFO] Ready to audit directory: ${handle.name}`);
       }
@@ -160,7 +160,7 @@ export function AuditView() {
                   type="text" 
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50" 
                   placeholder="Select a directory..."
-                  value={targetPath}
+                  value={selectedFolder || ''}
                   disabled
                 />
                 <Button onClick={handleBrowse} disabled={isAuditing} variant="secondary">Browse</Button>
