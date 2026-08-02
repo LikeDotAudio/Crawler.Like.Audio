@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const format = type === 'audio' ? 'bestaudio/best' : 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+    const dlFormat = type === 'audio' ? 'bestaudio/best' : 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
     
     // We get the JSON first to find the title
     const info = await youtubedl(url, {
@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
 
     // Now we spawn the stream
     const subprocess = youtubedl.exec(url, {
-      o: '-', // output to stdout
-      f: format,
+      output: '-', // output to stdout
+      format: dlFormat,
       extractAudio: type === 'audio',
       audioFormat: type === 'audio' ? 'mp3' : undefined,
       noCheckCertificates: true,
