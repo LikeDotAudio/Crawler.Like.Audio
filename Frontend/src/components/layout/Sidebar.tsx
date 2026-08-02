@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network, Usb, Settings, Hexagon, Globe, FileType, RefreshCw } from 'lucide-react';
+import { Search, Network, Usb, Settings, Hexagon, Globe, FileType, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -9,6 +9,7 @@ export function Sidebar() {
   const tabs = [
     { id: 'crawler', label: 'File Crawler', icon: Search },
     { id: 'visualizer', label: 'Visual Explorer', icon: Network },
+    { id: 'audit', label: 'Project Audit', icon: ShieldAlert },
     { id: 'usb', label: 'USB Scanner', icon: Usb },
     { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
     { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
@@ -52,9 +53,7 @@ export function Sidebar() {
       </nav>
       
       <div className="p-4 border-t border-border">
-        <div className="text-xs text-muted-foreground text-center">
-          System Analytics v2.0
-        </div>
+        {/* Footer reserved space */}
       </div>
     </div>
   );

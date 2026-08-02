@@ -7,6 +7,7 @@ import { UsbScannerView } from '@/components/views/UsbScannerView';
 import { WebCrawlerView } from '@/components/views/WebCrawlerView';
 import { PdfToMdView } from '@/components/views/PdfToMdView';
 import { RegeneratorView } from '@/components/views/RegeneratorView';
+import { AuditView } from '@/components/views/AuditView';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
           {activeTab === 'web-crawler' && <WebCrawlerView />}
           {activeTab === 'pdf-to-md' && <PdfToMdView />}
           {activeTab === 'regenerator' && <RegeneratorView />}
+          {activeTab === 'audit' && <AuditView />}
           {activeTab === 'settings' && (
             <div className="flex items-center justify-center h-full text-muted-foreground animate-in fade-in zoom-in-95 duration-300">
               <div className="text-center space-y-3">
