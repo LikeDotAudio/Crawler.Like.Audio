@@ -6,7 +6,7 @@ import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers } from 'lucide-react';
+import { Layers, ArrowRight, ArrowDown } from 'lucide-react';
 
 function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
   const { fitView } = useReactFlow();
@@ -24,6 +24,7 @@ function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
         nodes={nodes}
         edges={edges}
         fitView
+        minZoom={0.05}
         className="bg-transparent"
       >
         <Background color="#f97316" gap={20} size={1} />
@@ -43,20 +44,22 @@ function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
 export function VisualExplorerView() {
   const { graphData } = useAppStore();
   const [maxDepth, setMaxDepth] = useState<number | 'all'>('all');
+  const [layoutDir, setLayoutDir] = useState<'horizontal' | 'vertical'>('horizontal');
 
   const filteredGraphData = useMemo(() => {
     if (!graphData) return null;
-    if (maxDepth === 'all') return graphData;
 
-    const filteredNodes = graphData.nodes
-      .filter((node: any) => node.data && node.data.depth <= maxDepth)
-      .map((node: any, index: number) => ({
-        ...node,
-        position: {
-          ...node.position,
-          y: index * 80
-        }
-      }));
+    let nodesToFilter = graphData.nodes;
+    if (maxDepth !== 'all') {
+      nodesToFilter = graphData.nodes.filter((node: any) => node.data && node.data.depth <= maxDepth);
+    }
+
+    const filteredNodes = nodesToFilter.map((node: any, index: number) => ({
+      ...node,
+      position: layoutDir === 'horizontal'
+        ? { x: node.position.x, y: index * 80 }
+        : { x: index * 140, y: node.data.depth * 160 }
+    }));
       
     const filteredNodeIds = new Set(filteredNodes.map((n: any) => n.id));
     
@@ -65,7 +68,7 @@ export function VisualExplorerView() {
     );
 
     return { nodes: filteredNodes, edges: filteredEdges };
-  }, [graphData, maxDepth]);
+  }, [graphData, maxDepth, layoutDir]);
 
   return (
     <div className="w-full flex-1 flex flex-col space-y-4 animate-in fade-in zoom-in-95 duration-300">
@@ -76,30 +79,51 @@ export function VisualExplorerView() {
         </div>
         
         {graphData && (
-          <div className="flex items-center gap-2 bg-card/50 border border-border/50 rounded-lg p-1.5 shadow-sm">
-            <div className="text-xs text-muted-foreground flex items-center gap-1.5 pl-2 pr-1 uppercase tracking-wider font-semibold">
-              <Layers className="w-3 h-3" /> Depth:
-            </div>
-            {[1, 2, 3, 4, 5, 6].map((depth) => (
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2 bg-card/50 border border-border/50 rounded-lg p-1.5 shadow-sm">
               <Button
-                key={depth}
-                variant={maxDepth === depth ? "default" : "ghost"}
+                variant={layoutDir === 'horizontal' ? "default" : "ghost"}
                 size="sm"
-                className={`h-7 w-7 p-0 ${maxDepth === depth ? "shadow-sm shadow-primary/20" : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setMaxDepth(depth)}
+                className={`h-7 px-3 text-xs gap-2 ${layoutDir === 'horizontal' ? "shadow-sm shadow-primary/20 text-black font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setLayoutDir('horizontal')}
               >
-                {depth}
+                <ArrowRight className="w-3 h-3" /> Horizontal
               </Button>
-            ))}
-            <div className="w-px h-4 bg-border mx-1" />
-            <Button
-              variant={maxDepth === 'all' ? "default" : "ghost"}
-              size="sm"
-              className={`h-7 px-3 text-xs ${maxDepth === 'all' ? "shadow-sm shadow-primary/20" : "text-muted-foreground hover:text-foreground"}`}
-              onClick={() => setMaxDepth('all')}
-            >
-              ALL
-            </Button>
+              <Button
+                variant={layoutDir === 'vertical' ? "default" : "ghost"}
+                size="sm"
+                className={`h-7 px-3 text-xs gap-2 ${layoutDir === 'vertical' ? "shadow-sm shadow-primary/20 text-black font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setLayoutDir('vertical')}
+              >
+                <ArrowDown className="w-3 h-3" /> Vertical
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-card/50 border border-border/50 rounded-lg p-1.5 shadow-sm">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5 pl-2 pr-1 uppercase tracking-wider font-semibold">
+                <Layers className="w-3 h-3" /> Depth:
+              </div>
+              {[1, 2, 3, 4, 5, 6].map((depth) => (
+                <Button
+                  key={depth}
+                  variant={maxDepth === depth ? "default" : "ghost"}
+                  size="sm"
+                  className={`h-7 w-7 p-0 ${maxDepth === depth ? "shadow-sm shadow-primary/20 text-black font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setMaxDepth(depth)}
+                >
+                  {depth}
+                </Button>
+              ))}
+              <div className="w-px h-4 bg-border mx-1" />
+              <Button
+                variant={maxDepth === 'all' ? "default" : "ghost"}
+                size="sm"
+                className={`h-7 px-3 text-xs ${maxDepth === 'all' ? "shadow-sm shadow-primary/20 text-black font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setMaxDepth('all')}
+              >
+                ALL
+              </Button>
+            </div>
           </div>
         )}
       </div>
