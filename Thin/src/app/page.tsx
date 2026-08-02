@@ -13,6 +13,7 @@ import { AuditView } from '@/components/views/AuditView';
 import { CsvToJsonView } from '@/components/views/CsvToJsonView';
 import { JsonToCsvView } from '@/components/views/JsonToCsvView';
 import { JsonConverterView } from '@/components/views/JsonConverterView';
+import { JsonPrettyPrintView } from '@/components/views/JsonPrettyPrintView';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
           {activeTab === 'csv-to-json' && <CsvToJsonView />}
           {activeTab === 'json-to-csv' && <JsonToCsvView />}
           {activeTab === 'json-converter' && <JsonConverterView />}
+          {activeTab === 'json-pretty-print' && <JsonPrettyPrintView />}
         </div>
       </main>
     </div>

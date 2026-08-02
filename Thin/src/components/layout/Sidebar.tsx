@@ -9,13 +9,18 @@ export function Sidebar() {
 
   const tabGroups = [
     {
-      title: 'Core Tools',
+      title: 'Local Folder and File Crawler',
       tabs: [
         { id: 'crawler', label: 'File Crawler', icon: Search },
         { id: 'visualizer', label: 'Visual Explorer', icon: NetworkIcon },
         { id: 'program-map', label: 'Program Map', icon: FolderTree },
         { id: 'audit', label: 'Project Audit', icon: ShieldAlert },
         { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
+      ]
+    },
+    {
+      title: 'Web & Generation',
+      tabs: [
         { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
       ]
     },
@@ -33,6 +38,7 @@ export function Sidebar() {
         { id: 'csv-to-json', label: 'CSV to JSON', icon: Table },
         { id: 'json-to-csv', label: 'JSON to CSV', icon: FileJson },
         { id: 'json-converter', label: 'JSON to YAML/XML', icon: CodeXml },
+        { id: 'json-pretty-print', label: 'JSON Pretty Print', icon: FileJson },
       ]
     }
   ] as const;
