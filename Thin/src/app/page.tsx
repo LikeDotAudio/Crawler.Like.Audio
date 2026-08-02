@@ -15,6 +15,7 @@ import { JsonToCsvView } from '@/components/views/JsonToCsvView';
 import { JsonConverterView } from '@/components/views/JsonConverterView';
 import { JsonPrettyPrintView } from '@/components/views/JsonPrettyPrintView';
 import { AudioConverterView } from '@/components/views/AudioConverterView';
+import { SpreadsheetConverterView } from '@/components/views/SpreadsheetConverterView';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function Home() {
@@ -43,6 +44,7 @@ export default function Home() {
           {activeTab === 'json-converter' && <JsonConverterView />}
           {activeTab === 'json-pretty-print' && <JsonPrettyPrintView />}
           {activeTab === 'audio-converter' && <AudioConverterView />}
+          {activeTab === 'spreadsheet-converter' && <SpreadsheetConverterView />}
         </div>
       </main>
     </div>

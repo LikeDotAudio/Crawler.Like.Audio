@@ -15,6 +15,7 @@ export function AudioConverterView() {
   const [convertedFileUrl, setConvertedFileUrl] = useState<string>("");
   const [convertedFileName, setConvertedFileName] = useState<string>("");
   const [error, setError] = useState("");
+  const [targetFormat, setTargetFormat] = useState<"mp3" | "wav">("mp3");
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -22,9 +23,11 @@ export function AudioConverterView() {
     const selected = event.target.files?.[0];
     if (!selected) return;
     
-    const validTypes = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav"];
-    if (!validTypes.includes(selected.type) && !selected.name.toLowerCase().endsWith(".mp3") && !selected.name.toLowerCase().endsWith(".wav")) {
-      setError("Please upload a valid MP3 or WAV file.");
+    const validExtensions = [".mp3", ".wav", ".aac", ".ogg", ".flac", ".m4a"];
+    const ext = "." + selected.name.toLowerCase().split('.').pop();
+    
+    if (!validExtensions.includes(ext)) {
+      setError("Please upload a supported audio file (MP3, WAV, AAC, OGG, FLAC, M4A).");
       return;
     }
 
@@ -34,6 +37,9 @@ export function AudioConverterView() {
     setConvertedFileName("");
     setError("");
     setIsPlaying(false);
+    
+    if (ext === ".mp3") setTargetFormat("wav");
+    else setTargetFormat("mp3");
   };
 
   const togglePlay = () => {
@@ -154,21 +160,21 @@ export function AudioConverterView() {
       let convertedBlob: Blob;
       let newName = "";
 
-      const isMp3 = file.name.toLowerCase().endsWith(".mp3");
+      const isTargetWav = targetFormat === "wav";
       
       // We give it a tiny timeout so the UI can paint the "Processing..." state
       await new Promise(res => setTimeout(res, 50));
 
-      if (isMp3) {
-        // Convert MP3 to WAV
+      if (isTargetWav) {
+        // Convert to WAV
         const wavData = audioBufferToWav(decodedBuffer);
         convertedBlob = new Blob([wavData], { type: "audio/wav" });
-        newName = file.name.replace(/\.mp3$/i, ".wav");
+        newName = file.name.substring(0, file.name.lastIndexOf('.')) + ".wav";
       } else {
-        // Convert WAV to MP3
+        // Convert to MP3
         const mp3Data = encodeAudioBufferToMp3(decodedBuffer);
         convertedBlob = new Blob([mp3Data], { type: "audio/mp3" });
-        newName = file.name.replace(/\.wav$/i, ".mp3");
+        newName = file.name.substring(0, file.name.lastIndexOf('.')) + ".mp3";
       }
 
       const objectUrl = URL.createObjectURL(convertedBlob);
@@ -200,7 +206,7 @@ export function AudioConverterView() {
                 <Upload size={18} />
                 Upload Audio File
               </div>
-              <input type="file" accept=".mp3,.wav" className="hidden" onChange={handleFileUpload} />
+              <input type="file" accept=".mp3,.wav,.aac,.ogg,.flac,.m4a" className="hidden" onChange={handleFileUpload} />
             </label>
           </div>
         </header>
@@ -216,8 +222,8 @@ export function AudioConverterView() {
             <div className="w-24 h-24 bg-pink-500/10 rounded-full flex items-center justify-center">
               <Music size={40} className="text-pink-400" />
             </div>
-            <h2 className="text-2xl font-semibold text-slate-200">Upload an MP3 or WAV file</h2>
-            <p className="text-slate-400 max-w-md">Conversion is processed instantly using Web Audio API on your local machine.</p>
+            <h2 className="text-2xl font-semibold text-slate-200">Upload an Audio File</h2>
+            <p className="text-slate-400 max-w-md">Input: MP3, WAV, AAC, OGG, FLAC, M4A.<br/>Output: MP3 or WAV.<br/>Conversion is processed instantly on your local machine.</p>
           </div>
         )}
 
@@ -251,6 +257,21 @@ export function AudioConverterView() {
                   {isPlaying ? <Pause size={24} /> : <Play size={24} className="ml-1" />}
                 </button>
                 
+                <div className="w-full text-left mb-6">
+                  <label className="text-sm font-semibold text-slate-400 mb-2 block">Convert to format:</label>
+                  <select 
+                    value={targetFormat}
+                    onChange={(e) => {
+                      setTargetFormat(e.target.value as "mp3" | "wav");
+                      setConvertedFileUrl("");
+                    }}
+                    className="w-full bg-slate-950 border border-slate-700 text-slate-200 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/50 transition-all appearance-none"
+                  >
+                    <option value="mp3" disabled={file.name.toLowerCase().endsWith('.mp3')}>MP3 (Compressed)</option>
+                    <option value="wav" disabled={file.name.toLowerCase().endsWith('.wav')}>WAV (Lossless)</option>
+                  </select>
+                </div>
+                
                 <button
                   onClick={handleConversion}
                   disabled={isProcessing || !!convertedFileUrl}
@@ -268,7 +289,7 @@ export function AudioConverterView() {
                     ) : (
                       <>
                         <RefreshCw size={20} />
-                        Convert to {file.name.toLowerCase().endsWith('.mp3') ? 'WAV' : 'MP3'}
+                        Convert to {targetFormat.toUpperCase()}
                       </>
                     )}
                   </div>
