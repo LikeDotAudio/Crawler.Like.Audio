@@ -1,5 +1,6 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Hexagon, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi } from 'lucide-react';
+import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -26,7 +27,7 @@ export function Sidebar() {
         className="p-6 flex items-center gap-3 border-b border-border hover:bg-accent/30 transition-colors cursor-pointer group"
       >
         <div className="bg-primary/20 p-2 rounded-xl text-primary group-hover:scale-110 transition-transform">
-          <Hexagon className="w-6 h-6" />
+          <SpiderLogo className="w-6 h-6" />
         </div>
         <h1 className="font-bold text-xl tracking-tight">Crawler<span className="text-primary">.like.audio</span></h1>
       </a>
