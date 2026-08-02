@@ -4,6 +4,7 @@ import inspect
 import os
 import fnmatch
 import re
+import json
 
 # --- Global Version Information ---
 current_version = "Version 20260117.010000.1" # Updated date
@@ -105,3 +106,17 @@ class GitIgnoreMatcher:
                 return True
 
         return False
+
+def pretty_print_json(data):
+    """
+    Takes a Python dictionary, list, or JSON string and returns a pretty-printed JSON string.
+    """
+    try:
+        if isinstance(data, str):
+            parsed_data = json.loads(data)
+        else:
+            parsed_data = data
+        return json.dumps(parsed_data, indent=4)
+    except (json.JSONDecodeError, TypeError) as e:
+        print(f"Error parsing JSON for pretty printing: {e}")
+        return str(data)
