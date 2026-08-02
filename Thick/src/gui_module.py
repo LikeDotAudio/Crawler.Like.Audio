@@ -26,6 +26,8 @@ from .tabs.visual_explorer import VisualExplorerTab
 from .tabs.usb_devices_tab import USBDevicesTab
 from .tabs.PdfToMd import PdfToMdTab
 from .tabs.csv_to_json_tab import CsvToJsonTab
+from .tabs.json_to_csv_tab import JsonToCsvTab
+from .tabs.json_converter_tab import JsonConverterTab
 
 class FolderCrawlerApp:
     def __init__(self, root, start_directory):
@@ -125,6 +127,8 @@ class FolderCrawlerApp:
         self.tab_usb = USBDevicesTab(self.notebook)
         self.tab_pdf = PdfToMdTab(self.notebook, self._log, self.config_manager)
         self.tab_csv = CsvToJsonTab(self.notebook)
+        self.tab_json_csv = JsonToCsvTab(self.notebook)
+        self.tab_json_conv = JsonConverterTab(self.notebook)
 
         self.notebook.add(self.tab_select, text=" 📁 1. SELECT FOLDER ")
         self.notebook.add(self.tab_files, text=" ⚙️ 2. FILE TYPES ")
@@ -135,6 +139,8 @@ class FolderCrawlerApp:
         self.notebook.add(self.tab_web, text=" 🌐 7. WEB CRAWLER ")
         self.notebook.add(self.tab_pdf, text=" 📄 8. PDF TO MD ")
         self.notebook.add(self.tab_csv, text=" 📊 9. CSV TO JSON ")
+        self.notebook.add(self.tab_json_csv, text=" 🔄 10. JSON TO CSV ")
+        self.notebook.add(self.tab_json_conv, text=" 🛠️ 11. JSON FORMAT ")
 
         # 3. Bottom Area for Global Actions
         bottom_frame = ttk.Frame(self.root)

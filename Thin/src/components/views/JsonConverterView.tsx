@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import jsyaml from "js-yaml";
+import * as jsyaml from "js-yaml";
 import { json2xml } from "xml-js";
 import { Upload, FileCode2, Play, Download, CodeXml } from "lucide-react";
 import { motion } from "framer-motion";
