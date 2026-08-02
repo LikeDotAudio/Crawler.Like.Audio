@@ -59,12 +59,20 @@ export function VisualExplorerView() {
       nodesToFilter = nodesToFilter.filter((node: any) => node.data && node.data.label.startsWith('📁'));
     }
 
-    const filteredNodes = nodesToFilter.map((node: any, index: number) => ({
-      ...node,
-      position: layoutDir === 'horizontal'
-        ? { x: node.position.x, y: index * 80 }
-        : { x: index * 140, y: node.data.depth * 160 }
-    }));
+    const depthCounts: Record<number, number> = {};
+
+    const filteredNodes = nodesToFilter.map((node: any) => {
+      const d = node.data?.depth || 0;
+      depthCounts[d] = (depthCounts[d] || 0) + 1;
+      const indexAtDepth = depthCounts[d] - 1;
+
+      return {
+        ...node,
+        position: layoutDir === 'horizontal'
+          ? { x: d * 320, y: indexAtDepth * 60 }
+          : { x: indexAtDepth * 220, y: d * 120 }
+      };
+    });
       
     const filteredNodeIds = new Set(filteredNodes.map((n: any) => n.id));
     
