@@ -90,31 +90,31 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.22 0.01 270);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.65 0.2 45); /* Solar Orange */
+  --primary: rgb(244 144 44); /* Solar Orange */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.28 0.01 270);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.28 0.01 270);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.65 0.2 45 / 20%);
-  --accent-foreground: oklch(0.65 0.2 45); /* Solar Orange */
+  --accent: rgba(244, 144, 44, 0.2);
+  --accent-foreground: rgb(244 144 44); /* Solar Orange */
   --destructive: oklch(0.65 0.2 25);
   --border: oklch(0.3 0.01 270);
   --input: oklch(0.3 0.01 270);
-  --ring: oklch(0.65 0.2 45); /* Solar Orange */
-  --chart-1: oklch(0.65 0.2 45);
+  --ring: rgb(244 144 44); /* Solar Orange */
+  --chart-1: rgb(244 144 44);
   --chart-2: oklch(0.6 0.15 200);
   --chart-3: oklch(0.55 0.15 150);
   --chart-4: oklch(0.5 0.15 100);
   --chart-5: oklch(0.7 0.15 50);
   --sidebar: oklch(0.15 0.01 270);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.65 0.2 45); /* Solar Orange */
+  --sidebar-primary: rgb(244 144 44); /* Solar Orange */
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.25 0.01 270);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.25 0.01 270);
-  --sidebar-ring: oklch(0.65 0.2 45); /* Solar Orange */
+  --sidebar-ring: rgb(244 144 44); /* Solar Orange */
 }
 
 @layer base {
