@@ -11,6 +11,9 @@ export function HardwareAuditorView() {
   const [serialPorts, setSerialPorts] = useState<any[]>([]);
   const [mediaDevices, setMediaDevices] = useState<MediaDeviceInfo[]>([]);
   const [error, setError] = useState('');
+  
+  const [selectedUsb, setSelectedUsb] = useState<any | null>(null);
+  const [usbLogs, setUsbLogs] = useState<string[]>([]);
 
   const loadMediaDevices = async () => {
     try {
@@ -51,6 +54,51 @@ export function HardwareAuditorView() {
       }
     } catch (err: any) {
       if (!err.message.includes('No device selected')) setError(err.message);
+    }
+  };
+
+  const connectAndDump = async (device: any) => {
+    setSelectedUsb(device);
+    setUsbLogs([`[SYSTEM] Connecting to ${device.productName || 'Device'}...`]);
+    try {
+      await device.open();
+      setUsbLogs(prev => [...prev, `[SYSTEM] Device opened. Configuration: ${device.configuration?.configurationValue || 'None'}`]);
+      
+      setUsbLogs(prev => [...prev, `[INFO] USB Version: ${device.usbVersionMajor}.${device.usbVersionMinor}`]);
+      setUsbLogs(prev => [...prev, `[INFO] Device Class: ${device.deviceClass}, Subclass: ${device.deviceSubclass}`]);
+      
+      device.configurations.forEach((c: any) => {
+        setUsbLogs(prev => [...prev, `[CFG] Found Configuration ${c.configurationValue}:`]);
+        c.interfaces.forEach((i: any) => {
+          setUsbLogs(prev => [...prev, `  ├─ Interface ${i.interfaceNumber} (Class ${i.alternate.interfaceClass})`]);
+          i.alternate.endpoints.forEach((e: any) => {
+            setUsbLogs(prev => [...prev, `  │  └─ Endpoint ${e.endpointNumber} (${e.direction} ${e.type}) [Size: ${e.packetSize}B]`]);
+          });
+        });
+      });
+
+      // Attempt to read the raw Device Descriptor via control transfer (Standard GET_DESCRIPTOR request)
+      setUsbLogs(prev => [...prev, `[TX] 80 06 00 01 00 00 12 00 (GET_DESCRIPTOR)`]);
+      const result = await device.controlTransferIn({
+        requestType: 'standard',
+        recipient: 'device',
+        request: 0x06, // GET_DESCRIPTOR
+        value: 0x0100, // DEVICE descriptor type (0x01) << 8 | index (0)
+        index: 0x0000
+      }, 18);
+      
+      if (result.status === 'ok') {
+        const buffer = new Uint8Array(result.data.buffer);
+        const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+        setUsbLogs(prev => [...prev, `[RX] ${hex} (${buffer.length} bytes)`]);
+      } else {
+        setUsbLogs(prev => [...prev, `[RX] Status: ${result.status}`]);
+      }
+    } catch (e: any) {
+      setUsbLogs(prev => [...prev, `[ERROR] ${e.message}`]);
+      if (e.message.includes('Access denied')) {
+        setUsbLogs(prev => [...prev, `[HINT] OS Kernel has claimed this device (e.g., keyboard/mouse). Cannot read raw packets without unbinding the kernel driver.`]);
+      }
     }
   };
 
@@ -113,22 +161,43 @@ export function HardwareAuditorView() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 flex-1 overflow-y-auto space-y-3">
-            {usbDevices.length === 0 ? (
+          <CardContent className="p-4 flex-1 overflow-y-auto space-y-3 relative">
+            {selectedUsb ? (
+              <div className="absolute inset-0 bg-black/90 p-3 m-4 rounded-xl flex flex-col z-10 border border-primary/30">
+                <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/10 shrink-0">
+                  <div className="font-mono text-xs text-primary font-bold">PACKET CAPTURE / DESCRIPTORS</div>
+                  <Button size="sm" variant="ghost" className="h-6 text-xs hover:bg-white/10" onClick={() => {
+                    selectedUsb.close().catch(()=>{});
+                    setSelectedUsb(null);
+                  }}>Close</Button>
+                </div>
+                <div className="flex-1 overflow-y-auto font-mono text-[10px] sm:text-xs text-green-400 leading-tight space-y-1 p-1">
+                  {usbLogs.map((log, i) => (
+                    <div key={i} className={log.startsWith('[TX]') ? 'text-blue-400' : log.startsWith('[RX]') ? 'text-yellow-400' : log.startsWith('[ERROR]') ? 'text-red-400' : log.startsWith('[HINT]') ? 'text-purple-400' : 'text-green-400'}>
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : usbDevices.length === 0 ? (
               <div className="h-full flex items-center justify-center text-muted-foreground/50 italic text-sm">
                 No USB devices authorized yet.
               </div>
             ) : (
               usbDevices.map((dev, i) => (
-                <div key={i} className="flex justify-between items-center p-3 rounded-lg border border-border/50 bg-background/50 hover:border-primary/50 transition-colors">
+                <div 
+                  key={i} 
+                  onClick={() => connectAndDump(dev)}
+                  className="flex justify-between items-center p-3 rounded-lg border border-border/50 bg-background/50 hover:border-primary/50 transition-colors cursor-pointer group"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-primary/10 text-primary"><Usb className="w-4 h-4" /></div>
+                    <div className="p-2 rounded-md bg-primary/10 text-primary group-hover:scale-110 transition-transform"><Usb className="w-4 h-4" /></div>
                     <div>
                       <div className="text-sm font-semibold">{dev.productName || 'Unknown USB Device'}</div>
                       <div className="text-xs text-muted-foreground">{dev.manufacturerName || 'Unknown Manufacturer'}</div>
                     </div>
                   </div>
-                  <div className="text-xs font-mono text-muted-foreground">
+                  <div className="text-xs font-mono text-muted-foreground group-hover:text-primary transition-colors">
                     VID:{dev.vendorId.toString(16).padStart(4, '0')} PID:{dev.productId.toString(16).padStart(4, '0')}
                   </div>
                 </div>
