@@ -22,11 +22,15 @@ export function WebCrawlerView() {
     setIsLoading(true);
     
     try {
+      console.log(`[Scraper] Starting scrape for URL: ${url}`);
       // Using allorigins as a public CORS proxy for demonstration
       const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
       
+      console.log(`[Scraper] Proxy response status: ${response.status}`);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log(`[Scraper] Proxy data received, contents length: ${data.contents?.length || 0}`);
         const html = data.contents;
         
         // Basic HTML to text extraction
@@ -37,11 +41,14 @@ export function WebCrawlerView() {
         const rawText = doc.body.textContent || '';
         const cleanText = rawText.replace(/\s+/g, ' ').trim();
         
+        console.log(`[Scraper] Extraction successful. Clean text length: ${cleanText.length}`);
         setOutput(`Scraping: ${url}\n\n${cleanText}`);
       } else {
+        console.error(`[Scraper Error] Proxy returned status: ${response.status} ${response.statusText}`);
         setError('Failed to fetch the URL via proxy.');
       }
     } catch (e) {
+      console.error("[Scraper Exception]", e);
       setError('An error occurred during scraping.');
     } finally {
       setIsLoading(false);
