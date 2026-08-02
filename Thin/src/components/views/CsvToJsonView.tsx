@@ -297,12 +297,12 @@ export function CsvToJsonView() {
         )}
 
         {headers.length > 0 && (
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Configuration Column */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+          <div className="flex flex-col gap-8">
+            {/* Configuration Section */}
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 w-full">
               
               {/* Global Config */}
-              <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl">
+              <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl w-full">
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-indigo-300">
                   <Settings2 size={18} /> Global Settings
                 </h3>
@@ -318,95 +318,103 @@ export function CsvToJsonView() {
               </div>
 
               {/* Column Configs */}
-              <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl">
+              <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl overflow-hidden flex flex-col">
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-6 text-indigo-300">
                   Column Configurations
                 </h3>
                 
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  <AnimatePresence>
-                    {headers.map((header) => {
-                      const config = configs[header];
-                      if (!config) return null;
-                      const needsPartName = ["Hierarchical Key", "Key Name and Value"].includes(config.role);
+                <div className="overflow-x-auto rounded-xl border border-slate-800">
+                  <table className="w-full text-left text-sm text-slate-300 min-w-[800px]">
+                    <thead className="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Column</th>
+                        <th className="px-4 py-3 font-semibold w-1/4">JSON Key Name</th>
+                        <th className="px-4 py-3 font-semibold w-1/5">Role</th>
+                        <th className="px-4 py-3 font-semibold w-1/5">Nested Under</th>
+                        <th className="px-4 py-3 font-semibold w-1/5">Part Name</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      <AnimatePresence>
+                        {headers.map((header) => {
+                          const config = configs[header];
+                          if (!config) return null;
+                          const needsPartName = ["Hierarchical Key", "Key Name and Value"].includes(config.role);
 
-                      return (
-                        <motion.div 
-                          key={header}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-slate-950/50 border border-slate-800/80 p-4 rounded-xl hover:border-indigo-500/30 transition-colors"
-                        >
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-md text-xs font-bold font-mono tracking-wider">
-                              {header}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-xs text-slate-400 mb-1 block">JSON Key Name</label>
-                              <input
-                                type="text"
-                                value={config.jsonKey}
-                                onChange={(e) => updateConfig(header, { jsonKey: e.target.value })}
-                                className="w-full bg-slate-900 border border-slate-800 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-slate-400 mb-1 block">Role</label>
-                              <select
-                                value={config.role}
-                                onChange={(e) => updateConfig(header, { role: e.target.value as Role })}
-                                className="w-full bg-slate-900 border border-slate-800 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                              >
-                                <option>Simple Value</option>
-                                <option>Hierarchical Key</option>
-                                <option>Sub Key</option>
-                                <option>Value as Key</option>
-                                <option>Key Name and Value</option>
-                                <option>Skip</option>
-                              </select>
-                            </div>
-                            
-                            {config.role !== "Skip" && (
-                              <div>
-                                <label className="text-xs text-slate-400 mb-1 block">Nested Under</label>
-                                <select
-                                  value={config.nestedUnder}
-                                  onChange={(e) => updateConfig(header, { nestedUnder: e.target.value })}
-                                  className="w-full bg-slate-900 border border-slate-800 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                                >
-                                  {parentOptions.map((p) => (
-                                    <option key={p} value={p}>{p}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            )}
-
-                            {needsPartName && (
-                              <div>
-                                <label className="text-xs text-slate-400 mb-1 block">Part Name</label>
+                          return (
+                            <motion.tr 
+                              key={header}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="hover:bg-slate-800/30 transition-colors"
+                            >
+                              <td className="px-4 py-3 align-middle">
+                                <span className="bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md text-xs font-bold font-mono tracking-wider inline-block">
+                                  {header}
+                                </span>
+                              </td>
+                              
+                              <td className="px-4 py-2 align-middle">
                                 <input
                                   type="text"
-                                  value={config.partName}
-                                  onChange={(e) => updateConfig(header, { partName: e.target.value })}
-                                  className="w-full bg-slate-900 border border-slate-800 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                                  placeholder="e.g. parts"
+                                  value={config.jsonKey}
+                                  onChange={(e) => updateConfig(header, { jsonKey: e.target.value })}
+                                  className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
                                 />
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </AnimatePresence>
+                              </td>
+
+                              <td className="px-4 py-2 align-middle">
+                                <select
+                                  value={config.role}
+                                  onChange={(e) => updateConfig(header, { role: e.target.value as Role })}
+                                  className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
+                                >
+                                  <option>Simple Value</option>
+                                  <option>Hierarchical Key</option>
+                                  <option>Sub Key</option>
+                                  <option>Value as Key</option>
+                                  <option>Key Name and Value</option>
+                                  <option>Skip</option>
+                                </select>
+                              </td>
+                              
+                              <td className="px-4 py-2 align-middle">
+                                {config.role !== "Skip" && (
+                                  <select
+                                    value={config.nestedUnder}
+                                    onChange={(e) => updateConfig(header, { nestedUnder: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
+                                  >
+                                    {parentOptions.map((p) => (
+                                      <option key={p} value={p}>{p}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </td>
+
+                              <td className="px-4 py-2 align-middle">
+                                {needsPartName && (
+                                  <input
+                                    type="text"
+                                    value={config.partName}
+                                    onChange={(e) => updateConfig(header, { partName: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
+                                    placeholder="e.g. parts"
+                                  />
+                                )}
+                              </td>
+                            </motion.tr>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </motion.div>
 
-            {/* Preview Column */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
+            {/* Preview Section */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col w-full">
               <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-xl flex flex-col h-[700px]">
                 <div className="p-4 border-b border-white/5 flex items-center justify-between">
                   <h3 className="text-lg font-semibold flex items-center gap-2 text-purple-300">
