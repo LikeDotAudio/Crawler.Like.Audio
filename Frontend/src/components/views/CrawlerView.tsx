@@ -76,7 +76,18 @@ export function CrawlerView() {
     // Always ignore these
     ig.add(['.git', 'node_modules', 'venv', '.crawler', '.next']);
 
-    const crawlDirectory = async (handle: any, path: string, depth = 0) => {
+    let globalTreeYIndex = 0;
+
+    let rootNodeId = `dir-root`;
+    graphNodes.push({
+      id: rootNodeId,
+      position: { x: 0, y: globalTreeYIndex * 80 },
+      data: { label: `📁 ${dirHandle.name}` },
+      style: { background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold' }
+    });
+    globalTreeYIndex++;
+
+    const crawlDirectory = async (handle: any, path: string, depth = 0, parentNodeId: string = rootNodeId) => {
       // Check store state directly to allow stopping mid-crawl
       if (!useAppStore.getState().isCrawling) return;
       
@@ -88,20 +99,36 @@ export function CrawlerView() {
           const isIgnored = ig.ignores(entry.kind === 'directory' ? relativePath + '/' : relativePath);
           
           if (isIgnored) {
-            // addCrawlLog(`[INFO] Skipped ignored path: ${relativePath}`);
             continue;
           }
+          
+          const currentNodeId = `${entry.kind}-${path}${entry.name}`;
+          const currentY = globalTreeYIndex * 80;
+          globalTreeYIndex++;
           
           if (entry.kind === 'file') {
             fileCount++;
             mapTextBuilder += `${'  '.repeat(depth)}├── ${entry.name}\n`;
             
-            // Periodically log progress to avoid flooding the UI
             if (fileCount % 500 === 0) {
               addCrawlLog(`[INFO] Scanned ${fileCount} files so far...`);
             }
             
-            // Get actual file object to read size and extension
+            // Add File Node to Graph
+            graphNodes.push({
+              id: currentNodeId,
+              position: { x: (depth + 1) * 280, y: currentY },
+              data: { label: entry.name },
+              style: { background: '#1e293b', color: '#fff', border: '2px solid #334155', borderRadius: '8px', padding: '10px' }
+            });
+            graphEdges.push({
+              id: `e-${parentNodeId}-${currentNodeId}`,
+              source: parentNodeId,
+              target: currentNodeId,
+              type: 'smoothstep',
+              style: { stroke: '#475569' }
+            });
+
             try {
               const file = await entry.getFile();
               totalSize += file.size;
@@ -109,7 +136,6 @@ export function CrawlerView() {
               const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : 'unknown';
               extCounts[ext] = (extCounts[ext] || 0) + 1;
               
-              // If selected in file types, add to scrape text
               if (selectedExts.has(ext)) {
                 try {
                   const text = await file.text();
@@ -118,27 +144,20 @@ export function CrawlerView() {
                 } catch(e) {}
               }
 
-              // Run AST Parsing natively in browser for python files
               if (ext === '.py' && file.size < 1024 * 500) {
                 try {
                   const text = await file.text();
                   const metrics = astParser.extractMetrics(text);
                   
                   if (metrics.structures.length > 0) {
-                    const fileNodeId = `file-${file.name}-${fileLayoutIndex}`;
-                    
-                    graphNodes.push({
-                      id: fileNodeId,
-                      position: { x: fileLayoutIndex * 350, y: 0 },
-                      data: { label: file.name },
-                      style: { background: '#1e293b', color: '#fff', border: '2px solid #334155', borderRadius: '8px', padding: '10px', fontWeight: 'bold' }
-                    });
-                    
                     metrics.structures.forEach((struct, idx) => {
-                      const structId = `${fileNodeId}-${struct.name}-${idx}`;
+                      const structId = `${currentNodeId}-${struct.name}-${idx}`;
+                      const structY = globalTreeYIndex * 80;
+                      globalTreeYIndex++;
+                      
                       graphNodes.push({
                         id: structId,
-                        position: { x: (fileLayoutIndex * 350) + ((idx % 2 === 0 ? 1 : -1) * (60 + Math.random() * 40)), y: 120 + (idx * 50) },
+                        position: { x: (depth + 2) * 280, y: structY },
                         data: { label: struct.name },
                         style: { 
                           background: struct.type === 'class' ? '#f97316' : '#0ea5e9', 
@@ -151,31 +170,41 @@ export function CrawlerView() {
                       });
                       
                       graphEdges.push({
-                        id: `e-${fileNodeId}-${structId}`,
-                        source: fileNodeId,
+                        id: `e-${currentNodeId}-${structId}`,
+                        source: currentNodeId,
                         target: structId,
-                        animated: true,
+                        type: 'smoothstep',
                         style: { stroke: struct.type === 'class' ? '#f97316' : '#0ea5e9', strokeWidth: 2 }
                       });
                     });
-                    
-                    fileLayoutIndex++;
                   }
                   
                   if (metrics.classCount > 0 || metrics.functionCount > 0) {
                     addCrawlLog(`[AST] ${file.name} -> ${metrics.classCount} classes, ${metrics.functionCount} functions`);
                   }
-                } catch(e) {
-                  // Silent fail on unparseable files to not flood UI
-                }
+                } catch(e) {}
               }
-            } catch (e) {
-              // Permission errors on specific files
-            }
+            } catch (e) {}
           } else if (entry.kind === 'directory') {
             dirCount++;
             mapTextBuilder += `${'  '.repeat(depth)}├── 📁 ${entry.name}/\n`;
-            await crawlDirectory(entry, `${path}${entry.name}/`, depth + 1);
+            
+            // Add Directory Node to Graph
+            graphNodes.push({
+              id: currentNodeId,
+              position: { x: (depth + 1) * 280, y: currentY },
+              data: { label: `📁 ${entry.name}` },
+              style: { background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold' }
+            });
+            graphEdges.push({
+              id: `e-${parentNodeId}-${currentNodeId}`,
+              source: parentNodeId,
+              target: currentNodeId,
+              type: 'smoothstep',
+              style: { stroke: '#3b82f6', strokeWidth: 2 }
+            });
+
+            await crawlDirectory(entry, `${path}${entry.name}/`, depth + 1, currentNodeId);
           }
         }
       } catch (e) {

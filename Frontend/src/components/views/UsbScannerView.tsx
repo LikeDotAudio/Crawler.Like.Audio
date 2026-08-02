@@ -49,9 +49,19 @@ export function UsbScannerView() {
     try {
       // @ts-ignore
       if (navigator.usb) {
-        // Prompt user to grant permission to a new USB device
+        const exclusionFilters = devices.map(d => ({
+          vendorId: d.vendorId,
+          productId: d.productId
+        }));
+        
+        const reqOptions: any = {};
+        if (exclusionFilters.length > 0) {
+          reqOptions.exclusionFilters = exclusionFilters;
+        }
+
+        // Prompt user to grant permission to a new USB device, excluding already paired ones
         // @ts-ignore
-        await navigator.usb.requestDevice({ filters: [] });
+        await navigator.usb.requestDevice(reqOptions);
         await loadDevices(); // Reload the list of authorized devices
       }
     } catch (err) {
