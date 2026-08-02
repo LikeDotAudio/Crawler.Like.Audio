@@ -53,7 +53,7 @@ export function Sidebar() {
   return (
     <div className="w-64 border-r border-border bg-card flex flex-col h-full shadow-lg z-10">
       <a 
-        href="https://github.com/LikeDotAudio/Crawler.Like.Audio" 
+        href="https://like.audio/20260802/crawler-like-audio/" 
         target="_blank" 
         rel="noopener noreferrer" 
         className="p-6 flex items-center gap-3 border-b border-border hover:bg-accent/30 transition-colors cursor-pointer group"

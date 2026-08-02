@@ -26,7 +26,8 @@ export async function GET(req: NextRequest) {
     });
 
     // Sanitize title for filename
-    const safeTitle = (info.title || 'download').replace(/[^a-zA-Z0-9 -]/g, '').trim();
+    const infoAny = info as any;
+    const safeTitle = (infoAny.title || 'download').replace(/[^a-zA-Z0-9 -]/g, '').trim();
     const ext = type === 'audio' ? 'mp3' : 'mp4';
     const filename = `${safeTitle}.${ext}`;
 

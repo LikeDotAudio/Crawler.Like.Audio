@@ -4,7 +4,7 @@ A powerful, 100% client-side developer utility suite built entirely with **Next.
 
 ## 🚀 The Suite: How Every Page Works
 
-The application is divided into nine hyper-capable modules accessible via the sidebar. Each module pushes the limits of modern browser APIs to perform tasks that traditionally required heavy backend servers or native desktop applications.
+The application is divided into over 15 hyper-capable modules accessible via the sidebar. Each module pushes the limits of modern browser APIs to perform tasks that traditionally required heavy backend servers or native desktop applications.
 
 ### 1. 🔍 File Crawler
 The core engine of the suite. It uses the modern **File System Access API** to read local directories directly in your browser.
@@ -22,35 +22,55 @@ A dedicated view for analyzing the structural skeleton of your project.
 * It displays the pure, text-based directory tree (similar to the Linux `tree` command) generated during the deep crawl.
 * Perfect for getting a quick, high-level overview of where everything is located without the visual noise of the full file contents.
 
-### 4. 🛡️ Project Audit
+### 4. 🔲 SCOP Map (Project Scope Analyzer)
+An interactive, heavily-dense Treemap visualization (powered by `d3-hierarchy`).
+* Inspired directly by WinDirStat, it features beautiful 3D radial-gradient "cushions" that perfectly pack the screen.
+* Allows you to instantly visualize your project's storage footprint by file size, color-coded vividly by file type or as a heatmap.
+
+### 5. 🛡️ Project Audit
 A client-side security and architecture analysis tool. 
 * **Secrets Scanner:** Deep-scans your crawled codebase for exposed API keys, passwords, cryptographic tokens, and rogue `.env` variables using advanced regex heuristics.
 * **Endpoint Extractor:** Rips through your code to find and extract all hardcoded URLs, IP addresses, and API endpoints, helping you map out your app's external network dependencies.
 
-### 5. 🖲️ Hardware Auditor
+### 6. 🖲️ Hardware Auditor
 Hooks deeply into the browser's native hardware APIs to act as a complete physical peripheral scanner:
 * **WebUSB API:** Discovers and authorizes connected USB devices.
 * **Web Bluetooth (BLE):** Radar sweeps for nearby Bluetooth Low Energy devices, beacons, and Smart TVs.
 * **Web Serial API:** Hunts for connected RS-232 devices, Arduinos, and industrial COM ports.
 * **Media Devices (WebRTC):** Silently indexes every camera, microphone, and audio output connected to the system.
 
-### 6. 📡 Network Sweeper
+### 7. 📡 Network Sweeper
 A clever browser-based LAN scanner.
 * **Timing Attacks:** Since browsers cannot open raw TCP/UDP sockets, this tool maps out your local network (e.g., `192.168.1.x`) by performing cross-origin HTTP fetches to local IPs. 
 * **Heuristic Discovery:** By measuring the exact timeout and connection refused response times (timing attacks), it heuristically determines if a router, IoT device, or local web server exists at a given IP address—**100% inside the browser sandbox**.
 
-### 7. 🌐 Web Scraper
+### 8. 🌐 Web Scraper
 A lightweight utility for converting websites to text.
 * Enter any public URL, and the scraper will fetch the raw HTML.
 * It then uses client-side parsing (Turndown) to strip away the noise and convert the webpage directly into clean, readable Markdown.
 
-### 8. 📄 PDF to MD
+### 9. 🎬 Media Link Downloader
+A secure downloader that integrates Next.js API routes with `yt-dlp` (`youtube-dl-exec`).
+* Paste a YouTube link and download it natively.
+* Seamlessly extracts streams as high-quality **MP4 Movies** or **MP3 Audio Only** files saved directly to your machine.
+
+### 10. 📄 PDF to MD
 A local document extraction tool.
 * Drag and drop any PDF file directly into the browser.
 * Using a WebAssembly port of `pdfjs-dist`, it locally extracts all text strings from the document and formats them into Markdown.
 * **Privacy First:** Because it runs entirely in Wasm, your sensitive PDFs are never uploaded to any cloud server.
 
-### 9. 🔄 Project Regenerator
+### 11. 📊 Data Converters (CSV / JSON / Spreadsheet)
+A powerful suite of data ingestion and shuffling utilities built with `papaparse` and `xlsx` (SheetJS).
+* **CSV & JSON Importer/Shuffler:** Flatten or nest massive JSON objects, randomize CSV columns, and instantly export data.
+* **Spreadsheet Converter:** Read natively complex spreadsheet binaries (`.xlsx`, `.csv`, `.ods`, `.numbers`) and convert them into clean formats, directly in the client.
+
+### 12. 🎵 Audio Converter
+A robust browser-side media encoder leveraging native Web Audio APIs and CDN-imported `lamejs`.
+* **Universal Decode:** Drops any modern audio file (`.wav`, `.flac`, `.m4a`) to instantly decode its buffer.
+* **Client-side Encoding:** Re-encodes the raw audio into an optimized `.mp3` file, relying strictly on your CPU's client-side processing without uploading the audio file anywhere.
+
+### 13. 🔄 Project Regenerator
 The inverse of the File Crawler. 
 * It takes an `EVERYTHING.LOG` scrape file (which could be generated by an AI or by the File Crawler) and unpacks it.
 * You select an empty destination folder on your hard drive, and the Regenerator uses the **File System Access API** to physically re-create all the folders and write all the files back to your local disk, fully restoring the project.
