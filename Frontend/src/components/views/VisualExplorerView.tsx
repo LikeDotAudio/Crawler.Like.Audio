@@ -46,9 +46,16 @@ export function VisualExplorerView() {
     if (!graphData) return null;
     if (maxDepth === 'all') return graphData;
 
-    const filteredNodes = graphData.nodes.filter(
-      (node: any) => node.data && node.data.depth <= maxDepth
-    );
+    const filteredNodes = graphData.nodes
+      .filter((node: any) => node.data && node.data.depth <= maxDepth)
+      .map((node: any, index: number) => ({
+        ...node,
+        position: {
+          ...node.position,
+          y: index * 80
+        }
+      }));
+      
     const filteredNodeIds = new Set(filteredNodes.map((n: any) => n.id));
     
     const filteredEdges = graphData.edges.filter(
