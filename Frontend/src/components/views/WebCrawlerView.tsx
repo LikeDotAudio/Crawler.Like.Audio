@@ -1,0 +1,122 @@
+"use client";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Globe, Download, Play, SearchCode } from 'lucide-react';
+import { useState } from 'react';
+
+export function WebCrawlerView() {
+  const [url, setUrl] = useState('');
+  const [output, setOutput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleScrape = async () => {
+    if (!url) return;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      setError('URL must start with http:// or https://');
+      return;
+    }
+    
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      // Using allorigins as a public CORS proxy for demonstration
+      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const html = data.contents;
+        
+        // Basic HTML to text extraction
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        // Remove scripts and styles
+        doc.querySelectorAll('script, style, noscript, iframe, svg').forEach(el => el.remove());
+        
+        const rawText = doc.body.textContent || '';
+        const cleanText = rawText.replace(/\s+/g, ' ').trim();
+        
+        setOutput(`Scraping: ${url}\n\n${cleanText}`);
+      } else {
+        setError('Failed to fetch the URL via proxy.');
+      }
+    } catch (e) {
+      setError('An error occurred during scraping.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const downloadFile = () => {
+    const blob = new Blob([output], { type: 'text/markdown' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `scraped_content.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in zoom-in-95 duration-300">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Web Scraper</h2>
+        <p className="text-muted-foreground mt-1">Extract text content from any public URL into Markdown.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-1 shadow-md border-border/50 bg-card/80 backdrop-blur-sm h-fit">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Globe className="w-5 h-5" /> Target URL
+            </CardTitle>
+            <CardDescription>Enter a website URL to extract its textual content.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <input 
+                type="text" 
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors" 
+                placeholder="https://example.com"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            
+            {error && <div className="text-red-400 text-xs font-semibold">{error}</div>}
+            
+            <Button onClick={handleScrape} className="w-full gap-2 shadow-lg shadow-primary/20" disabled={isLoading || !url}>
+              <Play className={`w-4 h-4 ${isLoading ? 'animate-pulse' : ''}`} /> 
+              {isLoading ? 'Extracting...' : 'Start Scrape'}
+            </Button>
+
+            {output && (
+              <Button onClick={downloadFile} variant="secondary" className="w-full gap-2 mt-2">
+                <Download className="w-4 h-4" /> Download Markdown
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card className="md:col-span-2 shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[600px]">
+          <CardHeader className="border-b border-border/50 bg-muted/30 pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <SearchCode className="w-4 h-4 text-muted-foreground" /> Extracted Output
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-hidden">
+            <textarea 
+              readOnly 
+              className="h-full w-full bg-[#0d0d12] text-slate-300 p-4 font-mono text-sm resize-none focus:outline-none"
+              value={output || "No content extracted yet. Enter a URL and click Start Scrape."}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

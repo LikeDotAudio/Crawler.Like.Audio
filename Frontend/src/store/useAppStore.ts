@@ -19,8 +19,8 @@ export interface FileCategory {
 }
 
 interface AppState {
-  activeTab: 'crawler' | 'visualizer' | 'usb' | 'settings';
-  setActiveTab: (tab: 'crawler' | 'visualizer' | 'usb' | 'settings') => void;
+  activeTab: 'crawler' | 'visualizer' | 'usb' | 'settings' | 'web-crawler' | 'pdf-to-md' | 'regenerator';
+  setActiveTab: (tab: 'crawler' | 'visualizer' | 'usb' | 'settings' | 'web-crawler' | 'pdf-to-md' | 'regenerator') => void;
   
   // Crawler State
   selectedFolder: string | null;

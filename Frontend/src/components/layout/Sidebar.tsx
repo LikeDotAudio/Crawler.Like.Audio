@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network, Usb, Settings, Hexagon } from 'lucide-react';
+import { Search, Network, Usb, Settings, Hexagon, Globe, FileType, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -10,6 +10,9 @@ export function Sidebar() {
     { id: 'crawler', label: 'File Crawler', icon: Search },
     { id: 'visualizer', label: 'Visual Explorer', icon: Network },
     { id: 'usb', label: 'USB Scanner', icon: Usb },
+    { id: 'web-crawler', label: 'Web Scraper', icon: Globe },
+    { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
+    { id: 'regenerator', label: 'Regenerate', icon: RefreshCw },
     { id: 'settings', label: 'Settings', icon: Settings },
   ] as const;
 

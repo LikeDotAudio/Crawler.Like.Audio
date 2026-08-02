@@ -1,0 +1,185 @@
+"use client";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, FolderSearch, FileText, Upload } from 'lucide-react';
+import { useState, useRef } from 'react';
+
+export function RegeneratorView() {
+  const [logFile, setLogFile] = useState<File | null>(null);
+  const [outputDirHandle, setOutputDirHandle] = useState<any>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addLog = (msg: string) => {
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
+
+  const handleBrowseDir = async () => {
+    try {
+      if ((window as any).showDirectoryPicker) {
+        const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
+        setOutputDirHandle(handle);
+        addLog(`Selected output directory: ${handle.name}`);
+      } else {
+        addLog('[ERROR] Your browser does not support the File System Access API.');
+      }
+    } catch (e) {
+      addLog('[WARN] Directory selection cancelled.');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogFile(file);
+      addLog(`Selected scrape file: ${file.name}`);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!logFile || !outputDirHandle) return;
+    setIsRestoring(true);
+    addLog(`[INFO] Starting restoration process...`);
+
+    try {
+      const text = await logFile.text();
+      // Split based on our custom delimiter pattern
+      // Pattern: # --- File: /path/to/file.ext ---
+      const fileBlocks = text.split('# --- File: ');
+      
+      let restoredCount = 0;
+
+      for (let i = 1; i < fileBlocks.length; i++) {
+        const block = fileBlocks[i];
+        const endOfLineIndex = block.indexOf('---');
+        if (endOfLineIndex === -1) continue;
+
+        const rawFilePath = block.substring(0, endOfLineIndex).trim();
+        let fileContent = block.substring(endOfLineIndex + 3).replace(/^\s+/, '');
+        
+        // Remove leading slash if present for relative pathing
+        const relativePath = rawFilePath.startsWith('/') ? rawFilePath.substring(1) : rawFilePath;
+        const pathParts = relativePath.split('/');
+        const fileName = pathParts.pop();
+        
+        if (!fileName) continue;
+
+        let currentHandle = outputDirHandle;
+
+        // Traverse and create directories
+        for (const part of pathParts) {
+          if (part) {
+            currentHandle = await currentHandle.getDirectoryHandle(part, { create: true });
+          }
+        }
+
+        // Create and write the file
+        const fileHandle = await currentHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(fileContent);
+        await writable.close();
+
+        restoredCount++;
+        if (restoredCount % 10 === 0) {
+          addLog(`[INFO] Restored ${restoredCount} files...`);
+        }
+      }
+
+      addLog(`[SUCCESS] Restoration complete! Unpacked ${restoredCount} files into ${outputDirHandle.name}.`);
+    } catch (e) {
+      console.error(e);
+      addLog(`[ERROR] Failed during restoration. Make sure you granted read/write permissions.`);
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in zoom-in-95 duration-300">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Project Regenerator</h2>
+        <p className="text-muted-foreground mt-1">Unpack an EVERYTHING.LOG scrape file back into a physical file structure.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-1 shadow-md border-border/50 bg-card/80 backdrop-blur-sm h-fit">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <RefreshCw className="w-5 h-5" /> Regeneration Setup
+            </CardTitle>
+            <CardDescription>Select the log file and a destination folder.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">1. Scrape File</label>
+              <input 
+                type="file" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleFileChange}
+              />
+              <Button 
+                onClick={() => fileInputRef.current?.click()} 
+                variant="outline" 
+                className="w-full gap-2 border-dashed bg-background/50"
+                disabled={isRestoring}
+              >
+                <Upload className="w-4 h-4" /> 
+                {logFile ? logFile.name : 'Select EVERYTHING.LOG'}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">2. Destination Directory</label>
+              <Button 
+                onClick={handleBrowseDir} 
+                variant="outline" 
+                className="w-full gap-2 border-dashed bg-background/50"
+                disabled={isRestoring}
+              >
+                <FolderSearch className="w-4 h-4" /> 
+                {outputDirHandle ? outputDirHandle.name : 'Select Empty Folder'}
+              </Button>
+            </div>
+            
+            <div className="pt-4 border-t border-border/50">
+              <Button 
+                onClick={handleRestore} 
+                className="w-full gap-2 shadow-lg shadow-primary/20" 
+                disabled={isRestoring || !logFile || !outputDirHandle}
+              >
+                <RefreshCw className={`w-4 h-4 ${isRestoring ? 'animate-spin' : ''}`} /> 
+                {isRestoring ? 'Restoring...' : 'Start Restoration'}
+              </Button>
+            </div>
+
+          </CardContent>
+        </Card>
+        
+        <Card className="md:col-span-2 shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[600px]">
+          <CardHeader className="border-b border-border/50 bg-muted/30 pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <FileText className="w-4 h-4 text-muted-foreground" /> Restoration Log
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-hidden">
+            <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm">
+              {logs.length === 0 ? (
+                <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">Awaiting configuration...</div>
+              ) : (
+                logs.map((log, i) => (
+                  <div key={i} className={`mb-1 ${log.includes('[ERROR]') ? 'text-red-400' : log.includes('[SUCCESS]') ? 'text-green-400' : log.includes('[WARN]') ? 'text-yellow-400' : 'text-slate-300'}`}>
+                    {log}
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

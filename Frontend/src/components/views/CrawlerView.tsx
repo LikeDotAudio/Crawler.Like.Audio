@@ -7,11 +7,14 @@ import { FolderSearch, Play, Square, FileText, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
 import { astParser } from '@/lib/astParser';
+import ignore from 'ignore';
+import JSZip from 'jszip';
 
 export function CrawlerView() {
   const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, recentFolders, addRecentFolder, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
   const [mounted, setMounted] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -62,6 +65,17 @@ export function CrawlerView() {
         .map(ext => ext.ext)
     );
 
+    let ig = ignore();
+    try {
+      const gitignoreHandle = await dirHandle.getFileHandle('.gitignore');
+      const file = await gitignoreHandle.getFile();
+      const text = await file.text();
+      ig.add(text);
+      addCrawlLog('[INFO] Found and loaded .gitignore rules.');
+    } catch (e) {}
+    // Always ignore these
+    ig.add(['.git', 'node_modules', 'venv', '.crawler', '.next']);
+
     const crawlDirectory = async (handle: any, path: string, depth = 0) => {
       // Check store state directly to allow stopping mid-crawl
       if (!useAppStore.getState().isCrawling) return;
@@ -69,6 +83,14 @@ export function CrawlerView() {
       try {
         for await (const entry of handle.values()) {
           if (!useAppStore.getState().isCrawling) break;
+          
+          const relativePath = path === '/' ? entry.name : path.substring(1) + entry.name;
+          const isIgnored = ig.ignores(entry.kind === 'directory' ? relativePath + '/' : relativePath);
+          
+          if (isIgnored) {
+            // addCrawlLog(`[INFO] Skipped ignored path: ${relativePath}`);
+            continue;
+          }
           
           if (entry.kind === 'file') {
             fileCount++;
@@ -153,11 +175,6 @@ export function CrawlerView() {
           } else if (entry.kind === 'directory') {
             dirCount++;
             mapTextBuilder += `${'  '.repeat(depth)}├── 📁 ${entry.name}/\n`;
-            // Skip heavy directories for safety
-            if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'venv') {
-              addCrawlLog(`[INFO] Skipping ignored directory: ${path}${entry.name}`);
-              continue;
-            }
             await crawlDirectory(entry, `${path}${entry.name}/`, depth + 1);
           }
         }
@@ -214,6 +231,29 @@ export function CrawlerView() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const downloadZip = async () => {
+    try {
+      const zip = new JSZip();
+      if (mapText) zip.file("MAP.txt", mapText);
+      if (scrapeText) zip.file("EVERYTHING.LOG", scrapeText);
+      const logText = crawlLogs.map(l => `[${l.timestamp}] ${l.message}`).join("\n");
+      zip.file("Crawl.log", logText);
+      
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Crawler_Output_${new Date().toISOString().slice(0,10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      addCrawlLog('[ERROR] Failed to generate ZIP file.');
+    }
   };
 
   return (
@@ -276,23 +316,40 @@ export function CrawlerView() {
             </div>
 
             {(mapText || scrapeText) && !isCrawling && (
-              <div className="pt-4 border-t border-border/50 flex gap-3">
+              <div className="pt-4 border-t border-border/50 flex flex-col gap-3">
                 <Button 
-                  onClick={() => downloadFile('MAP.txt', mapText)} 
-                  variant="outline" 
-                  className="w-full gap-2 text-xs h-9 bg-background/50"
-                  disabled={!mapText}
+                  onClick={() => useAppStore.getState().setActiveTab('visualizer')} 
+                  variant="default" 
+                  className="w-full gap-2 text-xs h-9 shadow-lg shadow-primary/20"
                 >
-                  <Download className="w-3 h-3" /> Map
+                  <Play className="w-3 h-3" /> Send to Visualizer
                 </Button>
                 <Button 
-                  onClick={() => downloadFile('EVERYTHING.LOG', scrapeText)} 
-                  variant="outline" 
-                  className="w-full gap-2 text-xs h-9 bg-background/50"
+                  onClick={downloadZip} 
+                  variant="secondary" 
+                  className="w-full gap-2 text-xs h-9"
                   disabled={!scrapeText}
                 >
-                  <Download className="w-3 h-3" /> Scrape
+                  <Download className="w-3 h-3" /> Download ZIP Bundle
                 </Button>
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => downloadFile('MAP.txt', mapText)} 
+                    variant="outline" 
+                    className="w-full gap-2 text-xs h-9 bg-background/50"
+                    disabled={!mapText}
+                  >
+                    <Download className="w-3 h-3" /> Map
+                  </Button>
+                  <Button 
+                    onClick={() => downloadFile('EVERYTHING.LOG', scrapeText)} 
+                    variant="outline" 
+                    className="w-full gap-2 text-xs h-9 bg-background/50"
+                    disabled={!scrapeText}
+                  >
+                    <Download className="w-3 h-3" /> Scrape
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -320,25 +377,42 @@ export function CrawlerView() {
           </CardContent>
         </Card>
         
-        <Card className="md:col-span-2 shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[500px]">
-          <CardHeader className="border-b border-border/50 bg-muted/30 pb-4">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <FileText className="w-4 h-4 text-muted-foreground" /> Console Output
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-hidden">
-            <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm">
-              {crawlLogs.length === 0 ? (
-                <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">Waiting for process to start...</div>
-              ) : (
-                crawlLogs.map((log, i) => (
-                  <div key={i} className={`mb-1 ${log.message.includes('[ERROR]') ? 'text-red-400' : log.message.includes('[SUCCESS]') ? 'text-green-400' : log.message.includes('[WARN]') ? 'text-yellow-400' : 'text-slate-300'}`}>
-                    <span className="opacity-50 mr-2">{log.timestamp}</span>
-                    {log.message}
-                  </div>
-                ))
-              )}
+        <Card className="md:col-span-2 shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[520px]">
+          <CardHeader className="border-b border-border/50 bg-muted/30 pb-0">
+            <div className="flex gap-6">
+              <button 
+                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${!showMap ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setShowMap(false)}
+              >
+                <div className="flex items-center gap-2"><FileText className="w-4 h-4" /> Console Output</div>
+              </button>
+              <button 
+                className={`pb-4 text-sm font-medium border-b-2 transition-colors ${showMap ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setShowMap(true)}
+              >
+                <div className="flex items-center gap-2"><FolderSearch className="w-4 h-4" /> Program Map</div>
+              </button>
             </div>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-hidden relative">
+            {!showMap ? (
+              <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm absolute inset-0">
+                {crawlLogs.length === 0 ? (
+                  <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">Waiting for process to start...</div>
+                ) : (
+                  crawlLogs.map((log, i) => (
+                    <div key={i} className={`mb-1 ${log.message.includes('[ERROR]') ? 'text-red-400' : log.message.includes('[SUCCESS]') ? 'text-green-400' : log.message.includes('[WARN]') ? 'text-yellow-400' : 'text-slate-300'}`}>
+                      <span className="opacity-50 mr-2">{log.timestamp}</span>
+                      {log.message}
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="h-full w-full bg-[#0d0d12] p-4 overflow-y-auto font-mono text-sm absolute inset-0 whitespace-pre text-green-400/90">
+                {mapText ? mapText : <div className="text-muted-foreground/50 h-full flex items-center justify-center italic">No map generated yet. Run a crawl first.</div>}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
