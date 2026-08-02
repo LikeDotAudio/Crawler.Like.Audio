@@ -37,9 +37,9 @@ export function CrawlerView() {
       addCrawlLog('[INFO] Booting web-tree-sitter WASM engine...');
       await astParser.init();
       addCrawlLog('[SUCCESS] WebAssembly engine initialized for Python parsing.');
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      addCrawlLog('[ERROR] Failed to load WASM engine.');
+      addCrawlLog(`[ERROR] Failed to load WASM engine: ${e.message || e}`);
     }
     
     let fileCount = 0;

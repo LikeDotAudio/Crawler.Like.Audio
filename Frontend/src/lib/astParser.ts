@@ -3,22 +3,40 @@ declare const TreeSitter: any;
 class AstParserService {
   private parser: any = null;
   private isInitialized = false;
+  private initPromise: Promise<void> | null = null;
 
   async init() {
     if (this.isInitialized) return;
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = (async () => {
+      try {
+        if (typeof TreeSitter === 'undefined') {
+          throw new Error('TreeSitter global is not defined. Ensure web-tree-sitter.js is loaded.');
+        }
+
+        await TreeSitter.init({
+          locateFile(path: string) {
+            if (path.endsWith('tree-sitter.wasm')) {
+              return '/web-tree-sitter.wasm';
+            }
+            return '/' + path;
+          },
+        });
+        
+        this.parser = new TreeSitter();
+        
+        const pythonLanguage = await TreeSitter.Language.load('/tree-sitter-python.wasm');
+        this.parser.setLanguage(pythonLanguage);
+        
+        this.isInitialized = true;
+      } catch (err) {
+        this.initPromise = null;
+        throw err;
+      }
+    })();
     
-    await TreeSitter.init({
-      locateFile() {
-        return '/web-tree-sitter.wasm';
-      },
-    });
-    
-    this.parser = new TreeSitter();
-    
-    const pythonLanguage = await TreeSitter.Language.load('/tree-sitter-python.wasm');
-    this.parser.setLanguage(pythonLanguage);
-    
-    this.isInitialized = true;
+    return this.initPromise;
   }
 
   parse(code: string) {
