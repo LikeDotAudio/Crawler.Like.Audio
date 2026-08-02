@@ -41,7 +41,7 @@ export function Sidebar() {
               key={tab.id}
               variant={isActive ? 'default' : 'ghost'}
               className={`w-full justify-start gap-3 relative transition-all duration-300 font-medium ${
-                isActive ? 'shadow-md shadow-primary/20 bg-primary hover:bg-primary/90 text-[#2c90f4]' : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
+                isActive ? 'shadow-md shadow-primary/20 bg-primary hover:bg-primary/90 text-[#0a2540]' : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => setActiveTab(tab.id)}
             >
