@@ -144,6 +144,28 @@
   }
 }
 
+@keyframes borderTwinkle {
+  0% {
+    box-shadow: inset 0 0 0 1px rgba(209, 213, 219, 0.1), 0 0 0 rgba(244, 144, 44, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 0 1px rgba(244, 144, 44, 0.9), 0 0 12px rgba(244, 144, 44, 0.5);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(209, 213, 219, 0.1), 0 0 0 rgba(244, 144, 44, 0);
+  }
+}
+
+[data-slot="card"] {
+  animation: borderTwinkle 8s ease-in-out infinite;
+  border: none !important;
+  box-shadow: none; /* override Tailwind shadow so our animation handles it */
+}
+
+[data-slot="card"] {
+  --tw-ring-shadow: 0 0 #0000 !important;
+}
+
 /* Custom React Flow Controls Styles */
 .react-flow__controls-button {
   background-color: #e5e7eb !important; /* gray-200 */
