@@ -28,17 +28,22 @@ class AstParserService {
     return this.parser.parse(code);
   }
 
-  extractMetrics(code: string) {
+  extractMetrics(code: string, fileName?: string) {
     const tree = this.parse(code);
     let classCount = 0;
     let functionCount = 0;
+    const structures: { type: 'class' | 'function'; name: string }[] = [];
 
     // Traverse the syntax tree for specific nodes
     const walk = (node: any) => {
       if (node.type === 'class_definition') {
         classCount++;
+        const nameNode = node.childForFieldName('name');
+        if (nameNode) structures.push({ type: 'class', name: nameNode.text });
       } else if (node.type === 'function_definition') {
         functionCount++;
+        const nameNode = node.childForFieldName('name');
+        if (nameNode) structures.push({ type: 'function', name: nameNode.text });
       }
       for (let i = 0; i < node.childCount; i++) {
         const child = node.child(i);
@@ -47,7 +52,7 @@ class AstParserService {
     };
     
     walk(tree.rootNode);
-    return { classCount, functionCount };
+    return { classCount, functionCount, structures };
   }
 }
 

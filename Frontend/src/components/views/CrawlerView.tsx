@@ -45,6 +45,11 @@ export function CrawlerView() {
     let dirCount = 0;
     let extCounts: Record<string, number> = {};
     let totalSize = 0;
+    
+    // Graph Data
+    let graphNodes: any[] = [];
+    let graphEdges: any[] = [];
+    let fileLayoutIndex = 0;
 
     const crawlDirectory = async (handle: any, path: string) => {
       // Check store state directly to allow stopping mid-crawl
@@ -75,6 +80,45 @@ export function CrawlerView() {
                 try {
                   const text = await file.text();
                   const metrics = astParser.extractMetrics(text);
+                  
+                  if (metrics.structures.length > 0) {
+                    const fileNodeId = `file-${file.name}-${fileLayoutIndex}`;
+                    
+                    graphNodes.push({
+                      id: fileNodeId,
+                      position: { x: fileLayoutIndex * 350, y: 0 },
+                      data: { label: file.name },
+                      style: { background: '#1e293b', color: '#fff', border: '2px solid #334155', borderRadius: '8px', padding: '10px', fontWeight: 'bold' }
+                    });
+                    
+                    metrics.structures.forEach((struct, idx) => {
+                      const structId = `${fileNodeId}-${struct.name}-${idx}`;
+                      graphNodes.push({
+                        id: structId,
+                        position: { x: (fileLayoutIndex * 350) + ((idx % 2 === 0 ? 1 : -1) * (60 + Math.random() * 40)), y: 120 + (idx * 50) },
+                        data: { label: struct.name },
+                        style: { 
+                          background: struct.type === 'class' ? '#f97316' : '#0ea5e9', 
+                          color: '#fff', 
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          padding: '6px 10px'
+                        }
+                      });
+                      
+                      graphEdges.push({
+                        id: `e-${fileNodeId}-${structId}`,
+                        source: fileNodeId,
+                        target: structId,
+                        animated: true,
+                        style: { stroke: struct.type === 'class' ? '#f97316' : '#0ea5e9', strokeWidth: 2 }
+                      });
+                    });
+                    
+                    fileLayoutIndex++;
+                  }
+                  
                   if (metrics.classCount > 0 || metrics.functionCount > 0) {
                     addCrawlLog(`[AST] ${file.name} -> ${metrics.classCount} classes, ${metrics.functionCount} functions`);
                   }
@@ -105,6 +149,7 @@ export function CrawlerView() {
     if (useAppStore.getState().isCrawling) {
       addCrawlLog(`[SUCCESS] Deep crawl finished! Found ${fileCount} files across ${dirCount} subdirectories.`);
       addCrawlLog(`[INFO] Total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB.`);
+      useAppStore.getState().setGraphData({ nodes: graphNodes, edges: graphEdges });
       setIsCrawling(false);
     }
   };
