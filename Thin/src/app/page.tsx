@@ -8,6 +8,7 @@ import { ScopMapView } from '@/components/views/ScopMapView';
 import { HardwareAuditorView } from '@/components/views/HardwareAuditorView';
 import { NetworkScannerView } from '@/components/views/NetworkScannerView';
 import { WebCrawlerView } from '@/components/views/WebCrawlerView';
+import { YoutubeDownloaderView } from '@/components/views/YoutubeDownloaderView';
 import { PdfToMdView } from '@/components/views/PdfToMdView';
 import { RegeneratorView } from '@/components/views/RegeneratorView';
 import { AuditView } from '@/components/views/AuditView';
@@ -38,6 +39,7 @@ export default function Home() {
           { activeTab === 'hardware' && <HardwareAuditorView />}
           {activeTab === 'network' && <NetworkScannerView />}
           {activeTab === 'web-crawler' && <WebCrawlerView />}
+          {activeTab === 'youtube-downloader' && <YoutubeDownloaderView />}
           {activeTab === 'pdf-to-md' && <PdfToMdView />}
           {activeTab === 'regenerator' && <RegeneratorView />}
           {activeTab === 'audit' && <AuditView />}
