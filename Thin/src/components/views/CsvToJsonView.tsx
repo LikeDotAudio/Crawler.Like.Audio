@@ -3,26 +3,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import * as jsyaml from "js-yaml";
-import { json2xml } from "xml-js";
 import { Upload, FileJson, Settings2, Download, Table, FileCode2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-type Role = 
-  | "Hierarchical Key"
-  | "Sub Key"
-  | "Simple Value"
-  | "Value as Key"
-  | "Key Name and Value"
-  | "Skip";
-
-interface HeaderConfig {
-  originalHeader: string;
-  jsonKey: string;
-  role: Role;
-  nestedUnder: string;
-  partName: string;
-}
+import { Role, HeaderConfig, generateOutputs } from "../../lib/csvToJsonEngine";
 
 export function CsvToJsonView() {
   const [csvData, setCsvData] = useState<any[]>([]);
@@ -157,98 +140,20 @@ export function CsvToJsonView() {
     });
   };
 
-  const groupBy = (array: any[], key: string) => {
-    return array.reduce((result: any, currentValue: any) => {
-      const val = currentValue[key];
-      (result[val] = result[val] || []).push(currentValue);
-      return result;
-    }, {});
-  };
-
-  const buildHierarchy = (rows: any[], parentKey: string): any[] => {
-    const levelConfigs = Object.values(configs)
-      .filter((c) => c.nestedUnder === parentKey && c.role !== "Skip")
-      .sort((a, b) => headers.indexOf(a.originalHeader) - headers.indexOf(b.originalHeader));
-
-    const firstGroupingConfig = levelConfigs.find((c) =>
-      ["Hierarchical Key", "Value as Key", "Key Name and Value"].includes(c.role)
-    );
-
-    if (!firstGroupingConfig) {
-      const outputList: any[] = [];
-      const simpleConfigs = levelConfigs.filter((c) => ["Simple Value", "Sub Key"].includes(c.role));
-      
-      rows.forEach((row) => {
-        const node: any = {};
-        simpleConfigs.forEach((c) => {
-          if (c.role === "Skip") return;
-          let val = row[c.originalHeader];
-          if (val !== undefined && val !== "") {
-            if (val === "true" || val === "True") val = true;
-            if (val === "false" || val === "False") val = false;
-            node[c.jsonKey] = val;
-          }
-        });
-        if (Object.keys(node).length > 0) {
-          outputList.push(node);
-        }
-      });
-      return outputList;
-    }
-
-    const groupKey = firstGroupingConfig.originalHeader;
-    const grouped = groupBy(rows, groupKey);
-    const outputList: any[] = [];
-
-    Object.entries(grouped).forEach(([keyValue, groupRows]: [string, any]) => {
-      const node: any = {};
-      let val: any = keyValue;
-      if (val === "true" || val === "True") val = true;
-      if (val === "false" || val === "False") val = false;
-
-      if (firstGroupingConfig.role === "Value as Key") {
-        const children = buildHierarchy(groupRows, groupKey);
-        let mergedChildren = {};
-        children.forEach((c) => {
-          mergedChildren = { ...mergedChildren, ...c };
-        });
-        node[val as string] = mergedChildren;
-      } else if (firstGroupingConfig.role === "Hierarchical Key") {
-        node[firstGroupingConfig.jsonKey] = val;
-        node[firstGroupingConfig.partName] = buildHierarchy(groupRows, groupKey);
-      } else if (firstGroupingConfig.role === "Key Name and Value") {
-        node[firstGroupingConfig.jsonKey] = {
-          [firstGroupingConfig.partName]: val,
-          parts: buildHierarchy(groupRows, groupKey),
-        };
-      }
-      outputList.push(node);
-    });
-
-    return outputList;
-  };
-
   const generateJson = () => {
     if (!csvData.length) return;
     setError("");
     
     try {
-      const finalJson = {
-        [rootKeyName]: buildHierarchy(csvData, "root"),
-      };
-      setJsonOutput(finalJson);
-      
-      try {
-        setYamlOutput(jsyaml.dump(finalJson));
-      } catch (yErr: any) {
-        setYamlOutput("# Error generating YAML: " + yErr.message);
-      }
-      
-      try {
-        setXmlOutput(json2xml(JSON.stringify(finalJson), { compact: true, spaces: 4 }));
-      } catch (xErr: any) {
-        setXmlOutput("<!-- XML Error: Keys cannot contain spaces or invalid characters -->\n" + xErr.message);
-      }
+      const { jsonOutput: jOut, yamlOutput: yOut, xmlOutput: xOut } = generateOutputs(
+        csvData,
+        configs,
+        rootKeyName,
+        headers
+      );
+      setJsonOutput(jOut);
+      setYamlOutput(yOut);
+      setXmlOutput(xOut);
     } catch (e: any) {
       setError("Failed to generate: " + e.message);
     }

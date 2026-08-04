@@ -4,10 +4,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, PackageSearch, Ghost, SearchCode, Ruler, FolderSearch, Play, Download } from 'lucide-react';
-import ignore from 'ignore';
 import { useAppStore } from '@/store/useAppStore';
-import { ALL_AUDITORS } from '@/lib/audits';
-import { AuditContext } from '@/lib/audits/types';
+import { runAuditEngine } from '@/lib/auditEngine';
 
 export function AuditView() {
   const { dirHandle, setDirHandle, selectedFolder, setSelectedFolder } = useAppStore();
@@ -51,92 +49,25 @@ export function AuditView() {
       addLog('[ERROR] Please select a directory first.');
       return;
     }
-    
+
     setIsAuditing(true);
     setActiveAudit(auditType);
-    setAuditLogs([`[INFO] Starting ${auditType.toUpperCase()} Audit...`]);
-    
-    let ig = ignore();
-    try {
-      const gitignoreHandle = await dirHandle.getFileHandle('.gitignore');
-      const file = await gitignoreHandle.getFile();
-      const text = await file.text();
-      ig.add(text);
-    } catch (e) {}
-    ig.add(['.git', 'node_modules', 'venv', '.next']);
+    setAuditLogs([]);
 
-    let filesScanned = 0;
-    let issuesFound = 0;
-    
-    // Determine which modules to run
-    const modulesToRun = auditType === 'all' 
-      ? Object.values(ALL_AUDITORS) 
-      : [ALL_AUDITORS[auditType]].filter(Boolean);
-
-    const sharedState: Record<string, any> = {};
-
-    const scanDirectory = async (handle: any, path: string) => {
-      for await (const entry of handle.values()) {
-        const relativePath = path === '/' ? entry.name : path.substring(1) + entry.name;
-        if (ig.ignores(entry.kind === 'directory' ? relativePath + '/' : relativePath)) continue;
-
-        if (entry.kind === 'directory') {
-          await scanDirectory(entry, `${path}${entry.name}/`);
-        } else if (entry.kind === 'file') {
-          filesScanned++;
-          
-          let file: File | undefined;
-          let text: string | null = null;
-          const ext = entry.name.split('.').pop()?.toLowerCase() || '';
-
-          // Only read text for files we expect might need it, and keep it under 500kb
-          try {
-            file = await entry.getFile();
-            if (file && file.size < 1024 * 500) {
-              text = await file.text();
-            }
-          } catch(e) {}
-
-          const ctx: AuditContext = {
-            file: file as File,
-            text,
-            path,
-            entryName: entry.name,
-            ext,
-            addLog,
-            incrementIssues: () => { issuesFound++; },
-            sharedState
-          };
-
-          for (const mod of modulesToRun) {
-            await mod.processFile(ctx);
-          }
-        }
+    await runAuditEngine({
+      dirHandle,
+      auditType,
+      onLog: addLog,
+      onComplete: () => {
+        setIsAuditing(false);
+        setActiveAudit(null);
+      },
+      onError: (err) => {
+        addLog(typeof err === 'string' ? err : `[ERROR] ${err.message}`);
+        setIsAuditing(false);
+        setActiveAudit(null);
       }
-    };
-
-    await scanDirectory(dirHandle, '/');
-    
-    // Run finalizers
-    for (const mod of modulesToRun) {
-      if (mod.finalize) {
-        const ctx: AuditContext = {
-          file: null as any,
-          text: null,
-          path: '/',
-          entryName: '',
-          ext: '',
-          addLog,
-          incrementIssues: () => { issuesFound++; },
-          sharedState
-        };
-        mod.finalize(ctx);
-      }
-    }
-
-    addLog(`[SUCCESS] Audit Complete! Scanned ${filesScanned} files. Found ${issuesFound} items of interest.`);
-    setIsAuditing(false);
-    setActiveAudit(null);
+    });
   };
 
   const auditModules = [

@@ -4,8 +4,7 @@ import React, { useState } from "react";
 import { Upload, FileSpreadsheet, Download, RefreshCw, TableProperties } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
-
-type SupportedFormat = "xlsx" | "xls" | "csv" | "ods";
+import { parseSpreadsheet, convertSpreadsheet, SupportedFormat } from "../../lib/spreadsheetConverterEngine";
 
 export function SpreadsheetConverterView() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,7 +22,7 @@ export function SpreadsheetConverterView() {
     { id: "ods", name: "OpenDocument Spreadsheet (ODS)" }
   ];
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0];
     if (!selected) return;
 
@@ -33,71 +32,34 @@ export function SpreadsheetConverterView() {
     setError("");
     setIsProcessing(true);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const wb = XLSX.read(data, { type: "array" });
-        setWorkbook(wb);
-        
-        // Auto-select a target format that is different from the input
-        const ext = selected.name.split('.').pop()?.toLowerCase();
-        if (ext === 'csv') setTargetFormat('xlsx');
-        else if (ext === 'xlsx' || ext === 'xls') setTargetFormat('csv');
-        else setTargetFormat('xlsx');
-        
-      } catch (err: any) {
-        setError("Error parsing spreadsheet: " + err.message);
-        setWorkbook(null);
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-    reader.onerror = () => {
-      setError("Failed to read file.");
+    try {
+      const { workbook: wb, suggestedFormat } = await parseSpreadsheet(selected);
+      setWorkbook(wb);
+      setTargetFormat(suggestedFormat);
+    } catch (err: any) {
+      setError(err.message);
+      setWorkbook(null);
+    } finally {
       setIsProcessing(false);
-    };
-    reader.readAsArrayBuffer(selected);
+    }
   };
 
-  const handleConversion = () => {
+  const handleConversion = async () => {
     if (!file || !workbook) return;
     setIsProcessing(true);
     setError("");
 
     try {
-      let bookType: XLSX.BookType = "xlsx";
-      let mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      
-      switch (targetFormat) {
-        case "xlsx":
-          bookType = "xlsx";
-          mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-          break;
-        case "xls":
-          bookType = "biff8";
-          mimeType = "application/vnd.ms-excel";
-          break;
-        case "csv":
-          bookType = "csv";
-          mimeType = "text/csv";
-          break;
-        case "ods":
-          bookType = "ods";
-          mimeType = "application/vnd.oasis.opendocument.spreadsheet";
-          break;
-      }
-
-      // Generate buffer
-      const buffer = XLSX.write(workbook, { bookType, type: "array" });
-      const blob = new Blob([buffer], { type: mimeType });
+      const { blob, fileName } = await convertSpreadsheet({
+        workbook,
+        targetFormat,
+        originalFileName: file.name
+      });
       
       setConvertedData(blob);
-      const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-      setConvertedFileName(`${baseName}.${targetFormat}`);
-      
+      setConvertedFileName(fileName);
     } catch (err: any) {
-      setError("Failed to convert file: " + err.message);
+      setError(err.message);
     } finally {
       setIsProcessing(false);
     }

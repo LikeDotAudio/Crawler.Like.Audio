@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Usb, Plus, AlertCircle, Bluetooth, Cpu, Camera, Play, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useRef } from 'react';
+import { connectAndDumpDevice, startUsbStreamEngine } from '@/lib/hardwareAuditorEngine';
 
 export function HardwareAuditorView() {
   const [usbDevices, setUsbDevices] = useState<any[]>([]);
@@ -60,102 +61,21 @@ export function HardwareAuditorView() {
     }
   };
 
+  const addLog = (log: string, limit?: number) => {
+    setUsbLogs(prev => {
+      const newLogs = [...prev, log];
+      return limit ? newLogs.slice(-limit) : newLogs;
+    });
+  };
+
   const connectAndDump = async (device: any) => {
     setSelectedUsb(device);
-    setUsbLogs([`[SYSTEM] Connecting to ${device.productName || 'Device'}...`]);
-    try {
-      await device.open();
-      setUsbLogs(prev => [...prev, `[SYSTEM] Device opened. Configuration: ${device.configuration?.configurationValue || 'None'}`]);
-      
-      setUsbLogs(prev => [...prev, `[INFO] USB Version: ${device.usbVersionMajor}.${device.usbVersionMinor}`]);
-      setUsbLogs(prev => [...prev, `[INFO] Device Class: ${device.deviceClass}, Subclass: ${device.deviceSubclass}`]);
-      
-      device.configurations.forEach((c: any) => {
-        setUsbLogs(prev => [...prev, `[CFG] Found Configuration ${c.configurationValue}:`]);
-        c.interfaces.forEach((i: any) => {
-          setUsbLogs(prev => [...prev, `  ├─ Interface ${i.interfaceNumber} (Class ${i.alternate.interfaceClass})`]);
-          i.alternate.endpoints.forEach((e: any) => {
-            setUsbLogs(prev => [...prev, `  │  └─ Endpoint ${e.endpointNumber} (${e.direction} ${e.type}) [Size: ${e.packetSize}B]`]);
-          });
-        });
-      });
-
-      // Attempt to read the raw Device Descriptor via control transfer (Standard GET_DESCRIPTOR request)
-      setUsbLogs(prev => [...prev, `[TX] 80 06 00 01 00 00 12 00 (GET_DESCRIPTOR)`]);
-      const result = await device.controlTransferIn({
-        requestType: 'standard',
-        recipient: 'device',
-        request: 0x06, // GET_DESCRIPTOR
-        value: 0x0100, // DEVICE descriptor type (0x01) << 8 | index (0)
-        index: 0x0000
-      }, 18);
-      
-      if (result.status === 'ok') {
-        const buffer = new Uint8Array(result.data.buffer);
-        const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-        setUsbLogs(prev => [...prev, `[RX] ${hex} (${buffer.length} bytes)`]);
-      } else {
-        setUsbLogs(prev => [...prev, `[RX] Status: ${result.status}`]);
-      }
-    } catch (e: any) {
-      setUsbLogs(prev => [...prev, `[ERROR] ${e.message}`]);
-      if (e.message.includes('Access denied')) {
-        setUsbLogs(prev => [...prev, `[HINT] OS Kernel has claimed this device (e.g., keyboard/mouse). Cannot read raw packets without unbinding the kernel driver.`]);
-      }
-    }
+    setUsbLogs([]); // Clear logs before connecting
+    await connectAndDumpDevice(device, addLog);
   };
 
   const startStream = async () => {
-    if (!selectedUsb) return;
-    try {
-      if (!selectedUsb.configuration) {
-         await selectedUsb.selectConfiguration(1);
-      }
-      await selectedUsb.claimInterface(0);
-      setIsStreaming(true);
-      streamActive.current = true;
-      setUsbLogs(prev => [...prev, `[STREAM] Claimed Interface 0. Starting interrupt loop...`]);
-      
-      const iface = selectedUsb.configuration.interfaces[0].alternate;
-      const inEndpoint = iface.endpoints.find((e: any) => e.direction === 'in');
-      
-      if (!inEndpoint) {
-          setUsbLogs(prev => [...prev, `[ERROR] No IN endpoint found on Interface 0.`]);
-          setIsStreaming(false);
-          streamActive.current = false;
-          return;
-      }
-
-      const epNumber = inEndpoint.endpointNumber;
-      const size = inEndpoint.packetSize || 64;
-
-      while (streamActive.current) {
-         try {
-             // For interrupt transfer or bulk depending on endpoint
-             const result = await selectedUsb.transferIn(epNumber, size);
-             if (result.status === 'ok') {
-                 const buffer = new Uint8Array(result.data.buffer);
-                 const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-                 setUsbLogs(prev => {
-                     const newLogs = [...prev, `[STREAM-RX] ${hex}`];
-                     return newLogs.slice(-50); // limit backlog to 50 lines while streaming
-                 });
-             }
-         } catch (err: any) {
-             setUsbLogs(prev => [...prev, `[STREAM-ERROR] ${err.message}`]);
-             streamActive.current = false;
-             setIsStreaming(false);
-             break;
-         }
-      }
-    } catch (err: any) {
-      setUsbLogs(prev => [...prev, `[STREAM-ERROR] ${err.message}`]);
-      if (err.message.includes('Access denied')) {
-        setUsbLogs(prev => [...prev, `[HINT] The OS kernel currently owns Interface 0. You must detach the kernel driver or use a device without OS drivers.`]);
-      } else if (err.message.includes('protected class')) {
-        setUsbLogs(prev => [...prev, `[HINT] WebUSB blocks access to HID (Keyboard/Mouse), Audio/MIDI, Video, and Mass Storage devices for security. Try the Web MIDI API instead for MIDI devices!`]);
-      }
-    }
+    await startUsbStreamEngine(selectedUsb, streamActive, addLog, setIsStreaming);
   };
 
   const stopStream = () => {

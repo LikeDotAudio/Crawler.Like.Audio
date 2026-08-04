@@ -4,15 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { FolderTree, Maximize, Settings2, FolderSearch, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import * as d3 from "d3-hierarchy";
-
-interface TreeNode {
-  name: string;
-  value?: number;
-  type?: "file" | "directory";
-  extension?: string;
-  path?: string;
-  children?: TreeNode[];
-}
+import { TreeNode, scanDirectory, computeTreemapLayout, formatBytes, getSizeColor } from "../../lib/scopeMapEngine";
 
 const EXT_COLORS: Record<string, string> = {
   ".js": "#f7df1e",
@@ -54,68 +46,14 @@ export function ScopeMapView() {
       setTreeData(null);
       setScannedFiles(0);
 
-      const root: TreeNode = {
-        name: handle.name,
-        type: "directory",
-        path: handle.name,
-        children: []
-      };
+      const result = await scanDirectory(handle, (count) => {
+        setScannedFiles(count);
+      });
 
-      let count = 0;
-      let folderCount = 0;
-
-      const scanDir = async (dirHandle: any, node: TreeNode, currentPath: string) => {
-        const children: TreeNode[] = [];
-        for await (const entry of dirHandle.values()) {
-          if (entry.name === '.git' || entry.name === 'node_modules') continue;
-
-          if (entry.kind === "file") {
-            try {
-              const file = await entry.getFile();
-              count++;
-              if (count % 100 === 0) setScannedFiles(count);
-              
-              const ext = entry.name.includes('.') ? "." + entry.name.split('.').pop()?.toLowerCase() : "";
-              children.push({
-                name: entry.name,
-                value: file.size,
-                type: "file",
-                extension: ext,
-                path: `${currentPath}/${entry.name}`
-              });
-            } catch (e) {
-              // ignore locked files
-            }
-          } else if (entry.kind === "directory") {
-            folderCount++;
-            const dirNode: TreeNode = {
-              name: entry.name,
-              type: "directory",
-              path: `${currentPath}/${entry.name}`,
-              children: []
-            };
-            await scanDir(entry, dirNode, `${currentPath}/${entry.name}`);
-            // Only add directory if it has files
-            if (dirNode.children && dirNode.children.length > 0) {
-              children.push(dirNode);
-            }
-          }
-        }
-        node.children = children;
-      };
-
-      await scanDir(handle, root, handle.name);
-      setScannedFiles(count);
-      setTotalFiles(count);
-      setTotalFolders(folderCount + 1);
-
-      
-      // Clean up empty root
-      if (root.children?.length === 0) {
-        root.value = 1; // dummy value to prevent crash
-      }
-      
-      setTreeData(root);
+      setScannedFiles(result.totalFiles);
+      setTotalFiles(result.totalFiles);
+      setTotalFolders(result.totalFolders);
+      setTreeData(result.root);
     } catch (err) {
       console.error(err);
     } finally {
@@ -125,36 +63,14 @@ export function ScopeMapView() {
 
   const treemapLayout = useMemo(() => {
     if (!treeData) return null;
-
-    // Use d3-hierarchy to compute layout
-    const hierarchy = d3.hierarchy<TreeNode>(treeData)
-      .sum(d => d.value || 0)
-      .sort((a, b) => (b.value || 0) - (a.value || 0));
-
-    // The dimensions here are arbitrary relative units that we will map to percentages
-    const treemap = d3.treemap<TreeNode>()
-      .size([100, 100])
-      .paddingInner(0)
-      .paddingOuter(0)
-      .paddingTop(0)
-      .round(false);
-
-    return treemap(hierarchy);
+    return computeTreemapLayout(treeData);
   }, [treeData]);
 
   // Color scale for size heatmap
   const sizeColorScale = useMemo(() => {
     if (!treemapLayout) return () => EXT_COLORS["default"];
     const maxVal = treemapLayout.value || 1;
-    // from blue/cool (small) to red/hot (large)
-    const scale = (val: number) => {
-        const ratio = Math.min(val / (maxVal * 0.1 || 1), 1);
-        // Simple manual heatmap from blue to red
-        const r = Math.round(ratio * 255);
-        const b = Math.round((1 - ratio) * 255);
-        return `rgb(${r}, 0, ${b})`;
-    };
-    return scale;
+    return (val: number) => getSizeColor(val, maxVal);
   }, [treemapLayout]);
 
   const getColor = (node: d3.HierarchyRectangularNode<TreeNode>) => {
@@ -166,13 +82,7 @@ export function ScopeMapView() {
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+
 
   return (
     <div className="w-full flex flex-col gap-6 h-full">
