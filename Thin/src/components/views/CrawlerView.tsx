@@ -217,40 +217,41 @@ export function CrawlerView() {
           globalTreeYIndex++;
           
           if (entry.kind === 'file') {
-            fileCount++;
-            
             const rawExt = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : 'unknown';
             const ext = rawExt.toLowerCase();
-            const emoji = extensionEmojiMap[ext] || '📄';
             
-            mapTextBuilder += `${'  '.repeat(depth)}├── ${emoji} ${entry.name}\n`;
-            
-            if (fileCount % 500 === 0) {
-              addCrawlLog(`[INFO] Scanned ${fileCount} files so far...`);
-            }
-            
-            graphNodes.push({
-              id: currentNodeId,
-              position: { x: (depth + 1) * 280, y: currentY },
-              data: { label: `${emoji} ${entry.name}`, depth: depth + 1 },
-              style: { background: '#1e293b', color: '#fff', border: '2px solid #334155', borderRadius: '8px', padding: '10px' }
-            });
-            graphEdges.push({
-              id: `e-${parentNodeId}-${currentNodeId}`,
-              source: parentNodeId,
-              target: currentNodeId,
-              type: 'smoothstep',
-              style: { stroke: '#475569' }
-            });
+            if (fallbackAll || selectedExts.has(ext)) {
+              fileCount++;
+              
+              const emoji = extensionEmojiMap[ext] || '📄';
+              
+              mapTextBuilder += `${'  '.repeat(depth)}├── ${emoji} ${entry.name}\n`;
+              
+              if (fileCount % 500 === 0) {
+                addCrawlLog(`[INFO] Scanned ${fileCount} files so far...`);
+              }
+              
+              graphNodes.push({
+                id: currentNodeId,
+                position: { x: (depth + 1) * 280, y: currentY },
+                data: { label: `${emoji} ${entry.name}`, depth: depth + 1 },
+                style: { background: '#1e293b', color: '#fff', border: '2px solid #334155', borderRadius: '8px', padding: '10px' }
+              });
+              graphEdges.push({
+                id: `e-${parentNodeId}-${currentNodeId}`,
+                source: parentNodeId,
+                target: currentNodeId,
+                type: 'smoothstep',
+                style: { stroke: '#475569' }
+              });
 
-            try {
-              const file = await entry.getFile();
-              totalSize += file.size;
-              
-              // const ext is already defined above
-              extCounts[ext] = (extCounts[ext] || 0) + 1;
-              
-              if (fallbackAll || selectedExts.has(ext)) {
+              try {
+                const file = await entry.getFile();
+                totalSize += file.size;
+                
+                // const ext is already defined above
+                extCounts[ext] = (extCounts[ext] || 0) + 1;
+                
                 try {
                   const text = await file.text();
                   scrapeTextBuilder += `\n\n# --- File: ${path}${entry.name} ---\n`;
@@ -261,7 +262,6 @@ export function CrawlerView() {
                 } catch(e) {
                   console.error(`Failed reading text from ${entry.name}:`, e);
                 }
-              }
 
               if (ext === '.py' && file.size < 1024 * 500) {
                 try {
@@ -304,6 +304,7 @@ export function CrawlerView() {
                 } catch(e) {}
               }
             } catch (e) {}
+            }
           } else if (entry.kind === 'directory') {
             dirCount++;
             mapTextBuilder += `${'  '.repeat(depth)}├── 📁 ${entry.name}/\n`;
@@ -485,79 +486,81 @@ export function CrawlerView() {
                 )}
               </div>
             )}
-
-            {(mapText || scrapeText) && !isCrawling && (
-              <div className="pt-4 border-t border-border/50 grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-3">
-                  <Button 
-                    onClick={() => useAppStore.getState().setActiveTab('visualizer')} 
-                    variant="default" 
-                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-primary/20 text-black font-bold"
-                  >
-                    <Play className="w-3 h-3" /> Send to Visualizer
-                  </Button>
-                  <Button 
-                    onClick={() => useAppStore.getState().setActiveTab('program-map')} 
-                    variant="default" 
-                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-700 text-black font-bold"
-                  >
-                    <FolderTree className="w-3 h-3" /> Send to Program Map
-                  </Button>
-                  <Button 
-                    onClick={() => useAppStore.getState().setActiveTab('audit')} 
-                    variant="default" 
-                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-black font-bold"
-                  >
-                    <ShieldAlert className="w-3 h-3" /> Send to Auditor
-                  </Button>
-                  <Button 
-                    onClick={() => useAppStore.getState().setActiveTab('scope-map')} 
-                    variant="default" 
-                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-black font-bold"
-                  >
-                    <FolderTree className="w-3 h-3" /> Send to scope
-                  </Button>
-                  <Button 
-                    onClick={() => useAppStore.getState().setActiveTab('extractor')} 
-                    variant="default" 
-                    className="w-full gap-2 text-xs h-9 shadow-lg shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-black font-bold"
-                  >
-                    <FileText className="w-3 h-3" /> Open commend and mark down
-                  </Button>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Button 
-                    onClick={downloadZip} 
-                    variant="secondary" 
-                    className="w-full gap-2 text-xs h-9 text-black font-bold"
-                    disabled={!scrapeText}
-                  >
-                    <Download className="w-3 h-3" /> Download ZIP Bundle
-                  </Button>
-                  <Button 
-                    onClick={() => downloadFile('MAP.txt', mapText)} 
-                    variant="secondary" 
-                    className="w-full gap-2 text-xs h-9 text-black font-bold"
-                    disabled={!mapText}
-                  >
-                    <Download className="w-3 h-3" /> Download Map
-                  </Button>
-                  <Button 
-                    onClick={() => downloadFile('EVERYTHING.LOG', scrapeText)} 
-                    variant="secondary" 
-                    className="w-full gap-2 text-xs h-9 text-black font-bold"
-                    disabled={!scrapeText}
-                  >
-                    <Download className="w-3 h-3" /> Download Scrape
-                  </Button>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
         
       <FileTypeSelector />
       
+      {(mapText || scrapeText) && !isCrawling && (
+        <Card className="shadow-md border-border/50 bg-card/80 backdrop-blur-sm p-4 border-t-0">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={() => useAppStore.getState().setActiveTab('visualizer')} 
+                variant="default" 
+                className="w-full gap-2 text-xs h-9 shadow-lg shadow-primary/20 text-black font-bold"
+              >
+                <Play className="w-3 h-3" /> Send to Visualizer
+              </Button>
+              <Button 
+                onClick={() => useAppStore.getState().setActiveTab('program-map')} 
+                variant="default" 
+                className="w-full gap-2 text-xs h-9 shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-700 text-black font-bold"
+              >
+                <FolderTree className="w-3 h-3" /> Send to Program Map
+              </Button>
+              <Button 
+                onClick={() => useAppStore.getState().setActiveTab('audit')} 
+                variant="default" 
+                className="w-full gap-2 text-xs h-9 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-black font-bold"
+              >
+                <ShieldAlert className="w-3 h-3" /> Send to Auditor
+              </Button>
+              <Button 
+                onClick={() => useAppStore.getState().setActiveTab('scope-map')} 
+                variant="default" 
+                className="w-full gap-2 text-xs h-9 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 text-black font-bold"
+              >
+                <FolderTree className="w-3 h-3" /> Send to scope
+              </Button>
+              <Button 
+                onClick={() => useAppStore.getState().setActiveTab('extractor')} 
+                variant="default" 
+                className="w-full gap-2 text-xs h-9 shadow-lg shadow-amber-500/20 bg-amber-600 hover:bg-amber-700 text-black font-bold"
+              >
+                <FileText className="w-3 h-3" /> Open commend and mark down
+              </Button>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={downloadZip} 
+                variant="secondary" 
+                className="w-full gap-2 text-xs h-9 text-black font-bold"
+                disabled={!scrapeText}
+              >
+                <Download className="w-3 h-3" /> Download ZIP Bundle
+              </Button>
+              <Button 
+                onClick={() => downloadFile('MAP.txt', mapText)} 
+                variant="secondary" 
+                className="w-full gap-2 text-xs h-9 text-black font-bold"
+                disabled={!mapText}
+              >
+                <Download className="w-3 h-3" /> Download Map
+              </Button>
+              <Button 
+                onClick={() => downloadFile('EVERYTHING.LOG', scrapeText)} 
+                variant="secondary" 
+                className="w-full gap-2 text-xs h-9 text-black font-bold"
+                disabled={!scrapeText}
+              >
+                <Download className="w-3 h-3" /> Download Scrape
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <Card className="shadow-md border-border/50 bg-card/80 backdrop-blur-sm flex flex-col h-[400px]">
         <CardHeader className="border-b border-border/50 bg-muted/30 py-3">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
