@@ -3,6 +3,7 @@
 import { useAppStore, extensionEmojiMap, FileCategory } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FolderSearch, Play, Square, FileText, Download, ShieldAlert, FolderTree, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
@@ -95,13 +96,14 @@ const preScanDirectory = async (dirHandle: any, updateCategories: (categories: F
 export function CrawlerView() {
   const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
+  const [respectGitIgnore, setRespectGitIgnore] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleStart = async (respectGitIgnore: boolean = true) => {
+  const handleStart = async () => {
     if (!dirHandle) {
       addCrawlLog('[WARN] You must click "Browse..." to grant the browser permission to read a local folder.');
       return;
@@ -455,17 +457,27 @@ export function CrawlerView() {
               </div>
             </div>
             
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="respect-gitignore" 
+                checked={respectGitIgnore}
+                onCheckedChange={(checked) => setRespectGitIgnore(checked === true)}
+                disabled={isCrawling}
+              />
+              <label 
+                htmlFor="respect-gitignore" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+              >
+                Respect .gitignore (Skip ignored files)
+              </label>
+            </div>
+            
             {!(mapText || scrapeText) && (
               <div className="pt-4 flex flex-col gap-3">
                 {!isCrawling ? (
-                  <>
-                    <Button onClick={() => handleStart(true)} className="w-full gap-2 shadow-lg shadow-primary/20 text-xs h-9 text-black font-bold">
-                      <Play className="w-3 h-3" /> Start Crawl (Respect .gitignore)
-                    </Button>
-                    <Button onClick={() => handleStart(false)} variant="secondary" className="w-full gap-2 text-xs h-9 border border-border/50 text-black font-bold">
-                      <Play className="w-3 h-3" /> Start Crawl (Ignore .gitignore)
-                    </Button>
-                  </>
+                  <Button onClick={() => handleStart()} className="w-full gap-2 shadow-lg shadow-primary/20 text-xs h-9 text-black font-bold">
+                    <Play className="w-3 h-3" /> Start Crawl
+                  </Button>
                 ) : (
                   <Button onClick={handleStop} variant="destructive" className="w-full gap-2 shadow-lg shadow-destructive/20 animate-pulse text-xs h-9 font-bold">
                     <Square className="w-3 h-3 fill-current" /> Stop Process
