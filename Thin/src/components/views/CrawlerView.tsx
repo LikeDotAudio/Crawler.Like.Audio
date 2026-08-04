@@ -163,8 +163,9 @@ export function CrawlerView() {
       storeState.fileCategories
         .flatMap(cat => cat.extensions)
         .filter(ext => ext.selected)
-        .map(ext => ext.ext)
+        .map(ext => ext.ext.toLowerCase())
     );
+    const fallbackAll = selectedExts.size === 0;
 
     let ig = ignore();
     if (respectGitIgnore) {
@@ -216,7 +217,8 @@ export function CrawlerView() {
           if (entry.kind === 'file') {
             fileCount++;
             
-            const ext = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : 'unknown';
+            const rawExt = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : 'unknown';
+            const ext = rawExt.toLowerCase();
             const emoji = extensionEmojiMap[ext] || '📄';
             
             mapTextBuilder += `${'  '.repeat(depth)}├── ${emoji} ${entry.name}\n`;
@@ -246,7 +248,7 @@ export function CrawlerView() {
               // const ext is already defined above
               extCounts[ext] = (extCounts[ext] || 0) + 1;
               
-              if (selectedExts.has(ext)) {
+              if (fallbackAll || selectedExts.has(ext)) {
                 try {
                   const text = await file.text();
                   scrapeTextBuilder += `\n\n# --- File: ${path}${entry.name} ---\n`;
@@ -254,7 +256,9 @@ export function CrawlerView() {
                   
                   // Extract comments and markdown
                   extractorTextBuilder += extractCommentsAndMarkdown(text, ext, path, entry.name);
-                } catch(e) {}
+                } catch(e) {
+                  console.error(`Failed reading text from ${entry.name}:`, e);
+                }
               }
 
               if (ext === '.py' && file.size < 1024 * 500) {
