@@ -1,0 +1,13 @@
+{
+  "id": "Crawler",
+  "name": "Crawler",
+  "icon": "🕷️",
+  "group": "Pipeline",
+  "subGroup": "01 · Event",
+  "kind": "web",
+  "class": "execution",
+  "app": "APK:DOCKERS/APK:audio:WebPortal/SRC/APK:FrontEnd/Thin/out/index.html",
+  "description": "EXECUTION: INTAKE — reads a folder the browser has been given and turns it into a corpus: a pre-scan pie chart of what is in there, a deep crawl with AST parsing in WebAssembly, and an EVERYTHING.LOG plus a MAP.txt out the far end. THIS FOLDER IS A FACADE: its two entries are tracked symlinks, Thick -> APK:DOCKERS/APK:audio:WebPortal/SRC/APK:Softapps/Softapp:Crawler (the Tkinter desktop half) and Thin -> APK:DOCKERS/APK:audio:WebPortal/SRC/APK:FrontEnd/Thin (this one, a Next.js static export). The app named here is a build artefact — Thin/out/ is generated and untracked, so the crawler lane builds before it checks. THIS FILE OWNS THE STAGE: pipeline.json's _comment rules that an application's own display.json wins over the apps map, so 01 \u00b7 Event is the application's placement. The two symlink targets are separate keys in that map and were filed at 07c \u00b7 Monitor \u2014 neither this stage nor a decision anybody took, but a bare-leaf-name filing PLAN-378.01 carried across while repairing the path. Both rows now read 01, and .apk.scripts/check_display_registry.py section 9 fails if a facade and its symlink target ever file different stages again. PLAN-502.01 holds it.",
+  "topic": "APK.audio/Gui/Softapps/Crawler",
+  "autostart": false
+}
