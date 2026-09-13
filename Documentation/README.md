@@ -1,12 +1,18 @@
-# Crawler.Like.Audio — Media & Document Web Spider Softapp
+# Documentation Index — Crawler.Like.Audio
 
-## 📌 Overview
-Automated folder walker, document spider, media cataloging, and repository indexing softapp. Scans local file trees and remote HTTP/FTP servers to build media cloud indexes.
+## 📌 Documentation Overview
+This repository contains technical documentation, architecture notes, roadmap plans, and issue tracking for `Crawler.Like.Audio`, aligned with `APK:Documentation` standards.
 
-## 📁 Documentation Structure
-- [Plans/ROADMAP.md](Plans/ROADMAP.md) — Feature plans, development goals, and roadmap
-- [Notes/ARCHITECTURE_NOTES.md](Notes/ARCHITECTURE_NOTES.md) — Technical specifications, architecture notes, and integration details
-- [Issues/KNOWN_ISSUES.md](Issues/KNOWN_ISSUES.md) — Bug tracking, known edge cases, and active tasks
+## 📁 Document Categories
+
+### Issues
+- [Known Issues](Issues/KNOWN_ISSUES.md)
+
+### Notes
+- [Architecture Notes](Notes/ARCHITECTURE_NOTES.md)
+
+### Plans
+- [Roadmap](Plans/ROADMAP.md)
 
 ---
 *Aligned with `APK:Documentation` standards.*
