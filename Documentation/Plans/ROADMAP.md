@@ -1,4 +1,4 @@
 # Roadmap & Development Plans — Crawler.Like.Audio
 
 ## 🛣 Development Goals
-Integrate asynchronous worker pool for recursive HTTP/FTP crawling and deep file hash auditing.
+Implement asynchronous worker thread pool for recursive HTTP/FTP crawling, deep file hash deduplication, and automated metadata extraction pipelines.

@@ -1,4 +1,4 @@
 # Architecture Notes & Technical Specs — Crawler.Like.Audio
 
-## 🛠 Integration Details
-Publishes crawl state on `APK.audio/Gui/Display/Crawler`. Standalone mock fallback when broker is unreachable.
+## 🛠 Technical Specifications & Integration
+Publishes real-time crawl state and progress telemetry on topic `APK.audio/Gui/Display/Crawler`. Features standalone mock fallback when the MQTT broker is unreachable.

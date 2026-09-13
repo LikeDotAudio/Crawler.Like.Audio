@@ -1,4 +1,4 @@
 # Known Issues & Task Tracking — Crawler.Like.Audio
 
-## 🔍 Active Issues
-Tracked: handling broken symlink loops during deep local directory traversals.
+## 🔍 Active Issues & Edge Cases
+Tracked: preventing infinite loops on broken circular symlinks; handling rate limits on remote HTTP file endpoints.
