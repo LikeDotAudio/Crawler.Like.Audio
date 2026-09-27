@@ -2,3 +2,5 @@
 /OPEN AIR - 20260117232346.zip
 .crawler/
 scrapes/
+__pycache__/
+*.pyc
