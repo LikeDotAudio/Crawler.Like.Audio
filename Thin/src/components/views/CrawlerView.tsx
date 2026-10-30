@@ -11,6 +11,8 @@ import { astParser } from '@/lib/astParser';
 import ignore from 'ignore';
 import JSZip from 'jszip';
 import { runCrawler } from '@/lib/crawlerEngine';
+import { errorMessage } from "@/lib/utils";
+import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
 
 const CATEGORY_MAP: Record<string, string[]> = {
   'PROGRAMMING': ['.js', '.jsx', '.ts', '.tsx', '.py', '.php', '.go', '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.rb', '.sh', '.bash'],
@@ -19,15 +21,15 @@ const CATEGORY_MAP: Record<string, string[]> = {
   'DOCS': ['.md', '.txt', '.pdf', '.doc', '.docx', '.rst'],
 };
 
-const preScanDirectory = async (dirHandle: any, updateCategories: (categories: FileCategory[]) => void, addLog: (msg: string) => void) => {
+const preScanDirectory = async (dirHandle: FileSystemDirectoryHandle, updateCategories: (categories: FileCategory[]) => void, addLog: (msg: string) => void) => {
     addLog('[INFO] Starting fast pre-scan to discover file types...');
     const extStats: Record<string, { count: number, sizeBytes: number }> = {};
     let scannedFiles = 0;
 
-    const scan = async (handle: any) => {
+    const scan = async (handle: FileSystemDirectoryHandle) => {
         try {
             for await (const entry of handle.values()) {
-                if (entry.kind === 'file') {
+                if (isFileHandle(entry)) {
                     const file = await entry.getFile();
                     scannedFiles++;
                     const name = file.name;
@@ -43,7 +45,7 @@ const preScanDirectory = async (dirHandle: any, updateCategories: (categories: F
                     if (scannedFiles % 2500 === 0) {
                         addLog(`[INFO] Pre-scanned ${scannedFiles} files...`);
                     }
-                } else if (entry.kind === 'directory') {
+                } else if (isDirectoryHandle(entry)) {
                     if (entry.name !== '.git' && entry.name !== 'node_modules') {
                         await scan(entry);
                     }
@@ -98,11 +100,6 @@ export function CrawlerView() {
   const { isCrawling, setIsCrawling, selectedFolder, setSelectedFolder, dirHandle, setDirHandle, crawlLogs, addCrawlLog, mapText, scrapeText } = useAppStore();
   const [targetPath, setTargetPath] = useState(selectedFolder || '');
   const [respectGitIgnore, setRespectGitIgnore] = useState(true);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleStart = async () => {
     if (!dirHandle) {
@@ -147,9 +144,9 @@ export function CrawlerView() {
         useAppStore.getState().setScrapeText(finalScrapeText);
         useAppStore.getState().setExtractorText(result.extractorText);
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      addCrawlLog(`[ERROR] Crawl failed: ${e.message || e}`);
+      addCrawlLog(`[ERROR] Crawl failed: ${errorMessage(e)}`);
     } finally {
       setIsCrawling(false);
     }
@@ -162,8 +159,8 @@ export function CrawlerView() {
 
   const handleBrowse = async () => {
     try {
-      if ((window as any).showDirectoryPicker) {
-        const handle = await (window as any).showDirectoryPicker();
+      if (window.showDirectoryPicker) {
+        const handle = await window.showDirectoryPicker();
         setDirHandle(handle);
         setTargetPath(handle.name);
         setSelectedFolder(handle.name);

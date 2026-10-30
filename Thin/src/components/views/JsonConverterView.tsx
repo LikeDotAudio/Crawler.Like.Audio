@@ -1,16 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import * as jsyaml from "js-yaml";
 import { json2xml } from "xml-js";
 import { Upload, FileCode2, Play, Download, CodeXml } from "lucide-react";
 import { motion } from "framer-motion";
+import { errorMessage } from "@/lib/utils";
 
 export function JsonConverterView() {
-  const [jsonData, setJsonData] = useState<any>(null);
-  const [yamlOutput, setYamlOutput] = useState<string>("");
-  const [xmlOutput, setXmlOutput] = useState<string>("");
-  const [error, setError] = useState("");
+  const [jsonData, setJsonData] = useState<unknown>(null);
+  const [loadError, setError] = useState("");
+
+  // Outputs derive from the loaded JSON; no effect copies them into state.
+  const conversion = useMemo(() => {
+    if (!jsonData) return { yamlOutput: "", xmlOutput: "", error: "" };
+    try {
+      return {
+        yamlOutput: jsyaml.dump(jsonData),
+        xmlOutput: json2xml(JSON.stringify(jsonData), { compact: true, spaces: 4 }),
+        error: "",
+      };
+    } catch (err) {
+      return { yamlOutput: "", xmlOutput: "", error: "Failed to convert: " + errorMessage(err) };
+    }
+  }, [jsonData]);
+  const { yamlOutput, xmlOutput } = conversion;
+  const error = loadError || conversion.error;
   const [activeTab, setActiveTab] = useState<"yaml" | "xml">("yaml");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,27 +39,11 @@ export function JsonConverterView() {
         const parsed = JSON.parse(text);
         setJsonData(parsed);
         setError("");
-        setYamlOutput("");
-        setXmlOutput("");
-      } catch (err: any) {
-        setError("Invalid JSON file: " + err.message);
+      } catch (err) {
+        setError("Invalid JSON file: " + errorMessage(err));
       }
     };
     reader.readAsText(file);
-  };
-
-  const convertData = () => {
-    if (!jsonData) return;
-    try {
-      const yamlStr = jsyaml.dump(jsonData);
-      setYamlOutput(yamlStr);
-
-      const xmlStr = json2xml(JSON.stringify(jsonData), { compact: true, spaces: 4 });
-      setXmlOutput(xmlStr);
-      setError("");
-    } catch (err: any) {
-      setError("Failed to convert: " + err.message);
-    }
   };
 
   const downloadOutput = () => {
@@ -60,11 +59,6 @@ export function JsonConverterView() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
-  React.useEffect(() => {
-    convertData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jsonData]);
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -96,7 +90,7 @@ export function JsonConverterView() {
           </motion.div>
         )}
 
-        {jsonData && (
+        {!!jsonData && (
           <div className="grid lg:grid-cols-2 gap-8">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
               <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-4 rounded-2xl shadow-xl flex flex-col h-[650px]">

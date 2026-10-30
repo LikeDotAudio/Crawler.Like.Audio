@@ -1,4 +1,5 @@
 import * as d3 from "d3-hierarchy";
+import { isFileHandle, isDirectoryHandle } from "./fsAccess";
 
 export interface TreeNode {
   name: string;
@@ -16,7 +17,7 @@ export interface ScanResult {
 }
 
 export async function scanDirectory(
-  dirHandle: any,
+  dirHandle: FileSystemDirectoryHandle,
   onProgress?: (scannedFiles: number) => void
 ): Promise<ScanResult> {
   const root: TreeNode = {
@@ -29,12 +30,12 @@ export async function scanDirectory(
   let count = 0;
   let folderCount = 0;
 
-  const scanDir = async (handle: any, node: TreeNode, currentPath: string) => {
+  const scanDir = async (handle: FileSystemDirectoryHandle, node: TreeNode, currentPath: string) => {
     const children: TreeNode[] = [];
     for await (const entry of handle.values()) {
       if (entry.name === '.git' || entry.name === 'node_modules') continue;
 
-      if (entry.kind === "file") {
+      if (isFileHandle(entry)) {
         try {
           const file = await entry.getFile();
           count++;
@@ -51,7 +52,7 @@ export async function scanDirectory(
         } catch (e) {
           // ignore locked files
         }
-      } else if (entry.kind === "directory") {
+      } else if (isDirectoryHandle(entry)) {
         folderCount++;
         const dirNode: TreeNode = {
           name: entry.name,

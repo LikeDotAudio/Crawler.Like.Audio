@@ -1,9 +1,10 @@
 import ignore from 'ignore';
 import { ALL_AUDITORS } from '@/lib/audits';
-import { AuditContext } from '@/lib/audits/types';
+import { AuditContext, AuditSharedState } from '@/lib/audits/types';
+import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
 
 export interface RunAuditEngineOptions {
-  dirHandle: any;
+  dirHandle: FileSystemDirectoryHandle | null;
   auditType: string;
   onLog: (msg: string) => void;
   onComplete: (filesScanned: number, issuesFound: number) => void;
@@ -24,7 +25,7 @@ export async function runAuditEngine({
   
   onLog(`[INFO] Starting ${auditType.toUpperCase()} Audit...`);
   
-  let ig = ignore();
+  const ig = ignore();
   try {
     const gitignoreHandle = await dirHandle.getFileHandle('.gitignore');
     const file = await gitignoreHandle.getFile();
@@ -41,16 +42,16 @@ export async function runAuditEngine({
     ? Object.values(ALL_AUDITORS) 
     : [ALL_AUDITORS[auditType]].filter(Boolean);
 
-  const sharedState: Record<string, any> = {};
+  const sharedState: AuditSharedState = {};
 
-  const scanDirectory = async (handle: any, path: string) => {
+  const scanDirectory = async (handle: FileSystemDirectoryHandle, path: string) => {
     for await (const entry of handle.values()) {
       const relativePath = path === '/' ? entry.name : path.substring(1) + entry.name;
       if (ig.ignores(entry.kind === 'directory' ? relativePath + '/' : relativePath)) continue;
 
-      if (entry.kind === 'directory') {
+      if (isDirectoryHandle(entry)) {
         await scanDirectory(entry, `${path}${entry.name}/`);
-      } else if (entry.kind === 'file') {
+      } else if (isFileHandle(entry)) {
         filesScanned++;
         
         let file: File | undefined;
@@ -66,7 +67,7 @@ export async function runAuditEngine({
         } catch(e) {}
 
         const ctx: AuditContext = {
-          file: file as File,
+          file: file ?? null,
           text,
           path,
           entryName: entry.name,
@@ -90,7 +91,7 @@ export async function runAuditEngine({
     for (const mod of modulesToRun) {
       if (mod.finalize) {
         const ctx: AuditContext = {
-          file: null as any,
+          file: null,
           text: null,
           path: '/',
           entryName: '',

@@ -5,6 +5,7 @@ import { Upload, Music, FileAudio, Download, Play, Pause, RefreshCw } from "luci
 import { motion, AnimatePresence } from "framer-motion";
 import Script from "next/script";
 import { processAudioFile } from "../../lib/audioConverterEngine";
+import { errorMessage } from "@/lib/utils";
 
 export function AudioConverterView() {
   const [file, setFile] = useState<File | null>(null);
@@ -66,8 +67,8 @@ export function AudioConverterView() {
       const objectUrl = URL.createObjectURL(blob);
       setConvertedFileUrl(objectUrl);
       setConvertedFileName(newName);
-    } catch (err: any) {
-      setError("Failed to convert file: " + err.message);
+    } catch (err) {
+      setError("Failed to convert file: " + errorMessage(err));
     } finally {
       setIsProcessing(false);
     }

@@ -5,6 +5,7 @@ import { Upload, FileSpreadsheet, Download, RefreshCw, TableProperties } from "l
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { parseSpreadsheet, convertSpreadsheet, SupportedFormat } from "../../lib/spreadsheetConverterEngine";
+import { errorMessage } from "@/lib/utils";
 
 export function SpreadsheetConverterView() {
   const [file, setFile] = useState<File | null>(null);
@@ -36,8 +37,8 @@ export function SpreadsheetConverterView() {
       const { workbook: wb, suggestedFormat } = await parseSpreadsheet(selected);
       setWorkbook(wb);
       setTargetFormat(suggestedFormat);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errorMessage(err));
       setWorkbook(null);
     } finally {
       setIsProcessing(false);
@@ -58,8 +59,8 @@ export function SpreadsheetConverterView() {
       
       setConvertedData(blob);
       setConvertedFileName(fileName);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setIsProcessing(false);
     }

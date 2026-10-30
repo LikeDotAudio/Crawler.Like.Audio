@@ -1,6 +1,6 @@
 export interface RegeneratorOptions {
   logFile: File;
-  outputDirHandle: any;
+  outputDirHandle: FileSystemDirectoryHandle;
   onLog: (msg: string) => void;
 }
 
@@ -23,7 +23,7 @@ export async function restoreFiles(options: RegeneratorOptions): Promise<void> {
       if (endOfLineIndex === -1) continue;
 
       const rawFilePath = block.substring(0, endOfLineIndex).trim();
-      let fileContent = block.substring(endOfLineIndex + 3).replace(/^\s+/, '');
+      const fileContent = block.substring(endOfLineIndex + 3).replace(/^\s+/, '');
       
       // Remove leading slash if present for relative pathing
       const relativePath = rawFilePath.startsWith('/') ? rawFilePath.substring(1) : rawFilePath;

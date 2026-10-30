@@ -5,18 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileCode2, CheckSquare, Square, PieChart as PieChartIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useHydrated } from '@/lib/useHydrated';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const COLORS = ['#f97316', '#0ea5e9', '#10b981', '#f43f5e', '#8b5cf6', '#eab308'];
 
 export function FileTypeSelector() {
   const { fileCategories, toggleExtension, toggleCategory, toggleAllCategories } = useAppStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   if (!mounted) return <div className="h-48 flex items-center justify-center text-muted-foreground">Loading file types...</div>;
 
@@ -78,7 +74,7 @@ export function FileTypeSelector() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: any) => [`${value} MB`, 'Total Size']}
+                        formatter={(value) => [`${value} MB`, 'Total Size']}
                         contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', fontSize: '12px', color: '#fff' }}
                         itemStyle={{ color: '#fff' }}
                       />

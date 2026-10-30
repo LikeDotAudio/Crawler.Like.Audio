@@ -3,11 +3,11 @@ import { AuditContext, AuditorModule } from './types';
 export const deadcodeAuditor: AuditorModule = {
   id: 'deadcode',
   processFile: async (ctx: AuditContext) => {
-    if (!ctx.sharedState.allFiles) ctx.sharedState.allFiles = new Set<string>();
-    if (!ctx.sharedState.allImports) ctx.sharedState.allImports = new Set<string>();
+    const allFiles = (ctx.sharedState.allFiles ??= new Set<string>());
+    const allImports = (ctx.sharedState.allImports ??= new Set<string>());
 
     if (['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'php'].includes(ctx.ext)) {
-      ctx.sharedState.allFiles.add(ctx.entryName);
+      allFiles.add(ctx.entryName);
       if (ctx.text) {
         const importMatches = ctx.text.match(/(?:import|require|include|from)[\s({]+['"]([^'"]+)['"]/gi);
         if (importMatches) {
@@ -15,7 +15,7 @@ export const deadcodeAuditor: AuditorModule = {
             const match = m.match(/['"]([^'"]+)['"]/);
             if (match && match[1]) {
               const basename = match[1].split('/').pop();
-              if (basename) ctx.sharedState.allImports.add(basename.split('.')[0]);
+              if (basename) allImports.add(basename.split('.')[0]);
             }
           });
         }

@@ -56,8 +56,8 @@ export const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
   return out;
 };
 
-export const encodeAudioBufferToMp3 = (buffer: AudioBuffer): Int8Array => {
-  const lamejs = (window as any).lamejs;
+export const encodeAudioBufferToMp3 = (buffer: AudioBuffer): Int8Array<ArrayBuffer> => {
+  const lamejs = window.lamejs;
   if (!lamejs) throw new Error("MP3 Encoder is not loaded yet.");
   
   const channels = buffer.numberOfChannels;
@@ -72,7 +72,7 @@ export const encodeAudioBufferToMp3 = (buffer: AudioBuffer): Int8Array => {
   const floatToInt16 = (f32: Float32Array): Int16Array => {
     const i16 = new Int16Array(f32.length);
     for (let i = 0; i < f32.length; i++) {
-      let s = Math.max(-1, Math.min(1, f32[i]));
+      const s = Math.max(-1, Math.min(1, f32[i]));
       i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
     }
     return i16;
@@ -107,7 +107,7 @@ export const encodeAudioBufferToMp3 = (buffer: AudioBuffer): Int8Array => {
 export const processAudioFile = async (options: ConversionOptions): Promise<ConversionResult> => {
   const { file, targetFormat } = options;
   const arrayBuffer = await file.arrayBuffer();
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const audioContext = new (window.AudioContext || window.webkitAudioContext!)();
   const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
   let convertedBlob: Blob;
@@ -120,7 +120,7 @@ export const processAudioFile = async (options: ConversionOptions): Promise<Conv
     newName = file.name.substring(0, file.name.lastIndexOf('.')) + ".wav";
   } else {
     const mp3Data = encodeAudioBufferToMp3(decodedBuffer);
-    convertedBlob = new Blob([mp3Data as any], { type: "audio/mp3" });
+    convertedBlob = new Blob([mp3Data], { type: "audio/mp3" });
     newName = file.name.substring(0, file.name.lastIndexOf('.')) + ".mp3";
   }
 

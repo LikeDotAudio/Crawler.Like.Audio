@@ -5,36 +5,35 @@ import { Usb, Plus, AlertCircle, Bluetooth, Cpu, Camera, Play, Square } from 'lu
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useRef } from 'react';
 import { connectAndDumpDevice, startUsbStreamEngine } from '@/lib/hardwareAuditorEngine';
+import { errorMessage } from "@/lib/utils";
+import { useBrowserSupport } from '@/lib/useHydrated';
+
+const UNSUPPORTED_MSG = 'Some hardware APIs are not supported in this browser. Please use Chrome or Edge.';
+const probeUsb = () => !!navigator.usb;
 
 export function HardwareAuditorView() {
-  const [usbDevices, setUsbDevices] = useState<any[]>([]);
-  const [btDevices, setBtDevices] = useState<any[]>([]);
-  const [serialPorts, setSerialPorts] = useState<any[]>([]);
+  const [usbDevices, setUsbDevices] = useState<USBDevice[]>([]);
+  const [btDevices, setBtDevices] = useState<BluetoothDevice[]>([]);
+  const [serialPorts, setSerialPorts] = useState<SerialPort[]>([]);
   const [mediaDevices, setMediaDevices] = useState<MediaDeviceInfo[]>([]);
-  const [error, setError] = useState('');
+  const [actionError, setError] = useState('');
+  const usbSupported = useBrowserSupport(probeUsb);
+  const error = actionError || (usbSupported ? '' : UNSUPPORTED_MSG);
   
-  const [selectedUsb, setSelectedUsb] = useState<any | null>(null);
+  const [selectedUsb, setSelectedUsb] = useState<USBDevice | null>(null);
   const [usbLogs, setUsbLogs] = useState<string[]>([]);
   
   const [isStreaming, setIsStreaming] = useState(false);
   const streamActive = useRef(false);
 
-  const loadMediaDevices = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      setMediaDevices(devices.filter(d => d.deviceId)); // filter out empty devices if no permissions
-    } catch (e) {
-      console.warn('Media devices error', e);
-    }
-  };
+  const loadMediaDevices = () =>
+    navigator.mediaDevices.enumerateDevices()
+      .then(devices => setMediaDevices(devices.filter(d => d.deviceId))) // filter out empty devices if no permissions
+      .catch(e => console.warn('Media devices error', e));
 
   useEffect(() => {
     // Load USB
-    if ((navigator as any).usb) {
-      (navigator as any).usb.getDevices().then(setUsbDevices).catch(console.warn);
-    } else {
-      setError('Some hardware APIs are not supported in this browser. Please use Chrome or Edge.');
-    }
+    navigator.usb?.getDevices().then(setUsbDevices).catch(console.warn);
 
     // Load Media
     loadMediaDevices();
@@ -47,17 +46,17 @@ export function HardwareAuditorView() {
 
   const handleScanUsb = async () => {
     try {
-      if ((navigator as any).usb) {
+      if (navigator.usb) {
         const exclusionFilters = usbDevices.map(d => ({ vendorId: d.vendorId, productId: d.productId }));
-        const reqOptions: any = {};
+        const reqOptions: USBDeviceRequestOptions = {};
         if (exclusionFilters.length > 0) reqOptions.exclusionFilters = exclusionFilters;
         
-        await (navigator as any).usb.requestDevice(reqOptions);
-        const devices = await (navigator as any).usb.getDevices();
+        await navigator.usb.requestDevice(reqOptions);
+        const devices = await navigator.usb.getDevices();
         setUsbDevices(devices);
       }
-    } catch (err: any) {
-      if (!err.message.includes('No device selected')) setError(err.message);
+    } catch (err) {
+      if (!errorMessage(err).includes('No device selected')) setError(errorMessage(err));
     }
   };
 
@@ -68,7 +67,7 @@ export function HardwareAuditorView() {
     });
   };
 
-  const connectAndDump = async (device: any) => {
+  const connectAndDump = async (device: USBDevice) => {
     setSelectedUsb(device);
     setUsbLogs([]); // Clear logs before connecting
     await connectAndDumpDevice(device, addLog);
@@ -86,31 +85,31 @@ export function HardwareAuditorView() {
 
   const handleScanBluetooth = async () => {
     try {
-      if ((navigator as any).bluetooth) {
-        const device = await (navigator as any).bluetooth.requestDevice({ acceptAllDevices: true });
+      if (navigator.bluetooth) {
+        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
         if (device && !btDevices.find(d => d.id === device.id)) {
           setBtDevices(prev => [...prev, device]);
         }
       } else {
         setError('Web Bluetooth API is not supported in this browser.');
       }
-    } catch (err: any) {
-      if (!err.message.includes('cancelled')) setError(err.message);
+    } catch (err) {
+      if (!errorMessage(err).includes('cancelled')) setError(errorMessage(err));
     }
   };
 
   const handleScanSerial = async () => {
     try {
-      if ((navigator as any).serial) {
-        const port = await (navigator as any).serial.requestPort();
+      if (navigator.serial) {
+        const port = await navigator.serial.requestPort();
         if (port && !serialPorts.includes(port)) {
           setSerialPorts(prev => [...prev, port]);
         }
       } else {
         setError('Web Serial API is not supported in this browser.');
       }
-    } catch (err: any) {
-      if (!err.message.includes('No port selected')) setError(err.message);
+    } catch (err) {
+      if (!errorMessage(err).includes('No port selected')) setError(errorMessage(err));
     }
   };
 
@@ -249,7 +248,7 @@ export function HardwareAuditorView() {
           <CardContent className="p-4 flex-1 overflow-y-auto space-y-3">
             {mediaDevices.length === 0 ? (
               <div className="h-full flex items-center justify-center text-muted-foreground/50 italic text-sm text-center">
-                Click 'Request Access' to view connected Cameras and Microphones.
+                Click &lsquo;Request Access&rsquo; to view connected Cameras and Microphones.
               </div>
             ) : (
               mediaDevices.map((dev, i) => (

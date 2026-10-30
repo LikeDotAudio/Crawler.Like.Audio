@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Node, Edge } from '@xyflow/react';
+
+export type TabId = 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map' | 'extractor';
+
+/** A node of the crawler's dependency graph (Visual Explorer). */
+export type GraphNode = Node<{ label: string; depth: number }>;
+export type GraphEdge = Edge;
 
 interface LogEntry {
   message: string;
@@ -20,14 +27,14 @@ export interface FileCategory {
 }
 
 interface AppState {
-  activeTab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map' | 'extractor';
-  setActiveTab: (tab: 'crawler' | 'visualizer' | 'hardware' | 'network' | 'web-crawler' | 'pdf-to-md' | 'regenerator' | 'audit' | 'program-map' | 'csv-to-json' | 'json-to-csv' | 'json-converter' | 'json-pretty-print' | 'audio-converter' | 'spreadsheet-converter' | 'scope-map' | 'extractor') => void;
+  activeTab: TabId;
+  setActiveTab: (tab: TabId) => void;
   
   // Crawler State
   selectedFolder: string | null;
   setSelectedFolder: (folder: string | null) => void;
-  dirHandle: any | null;
-  setDirHandle: (handle: any | null) => void;
+  dirHandle: FileSystemDirectoryHandle | null;
+  setDirHandle: (handle: FileSystemDirectoryHandle | null) => void;
   recentFolders: string[];
   addRecentFolder: (folder: string) => void;
   
@@ -44,8 +51,8 @@ interface AppState {
   addCrawlLog: (message: string) => void;
   clearLogs: () => void;
   
-  graphData: { nodes: any[]; edges: any[] } | null;
-  setGraphData: (data: { nodes: any[]; edges: any[] } | null) => void;
+  graphData: { nodes: GraphNode[]; edges: GraphEdge[] } | null;
+  setGraphData: (data: { nodes: GraphNode[]; edges: GraphEdge[] } | null) => void;
   
   mapText: string;
   setMapText: (text: string) => void;
@@ -167,9 +174,9 @@ export const useAppStore = create<AppState>()(
       
       graphData: {
         nodes: [
-          { id: '1', position: { x: 250, y: 0 }, data: { label: 'main.py' } },
-          { id: '2', position: { x: 100, y: 100 }, data: { label: 'crawler_module.py' } },
-          { id: '3', position: { x: 400, y: 100 }, data: { label: 'usb_scanner.py' } },
+          { id: '1', position: { x: 250, y: 0 }, data: { label: 'main.py', depth: 0 } },
+          { id: '2', position: { x: 100, y: 100 }, data: { label: 'crawler_module.py', depth: 1 } },
+          { id: '3', position: { x: 400, y: 100 }, data: { label: 'usb_scanner.py', depth: 1 } },
         ],
         edges: [
           { id: 'e1-2', source: '1', target: '2', animated: true },

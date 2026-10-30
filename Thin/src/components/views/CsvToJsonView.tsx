@@ -1,31 +1,41 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { Upload, FileJson, Settings2, Download, Table, FileCode2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Role, HeaderConfig, generateOutputs } from "../../lib/csvToJsonEngine";
+import { Role, HeaderConfig, generateOutputs, type CsvRow, type GenerationResult } from "../../lib/csvToJsonEngine";
+import { errorMessage } from "@/lib/utils";
 
 export function CsvToJsonView() {
-  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [configs, setConfigs] = useState<Record<string, HeaderConfig>>({});
   const [rootKeyName, setRootKeyName] = useState("root");
-  const [jsonOutput, setJsonOutput] = useState<any>(null);
-  const [yamlOutput, setYamlOutput] = useState<string>("");
-  const [xmlOutput, setXmlOutput] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"json" | "yaml" | "xml">("json");
-  const [error, setError] = useState("");
+  const [loadError, setError] = useState("");
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [selectedSheet, setSelectedSheet] = useState<string>("");
 
+  // Outputs derive from the rows and the header configs; no effect copies them into state.
+  const generation = useMemo((): GenerationResult & { error: string } => {
+    if (!csvData.length) return { jsonOutput: null, yamlOutput: "", xmlOutput: "", error: "" };
+    try {
+      return { ...generateOutputs(csvData, configs, rootKeyName, headers), error: "" };
+    } catch (e) {
+      return { jsonOutput: null, yamlOutput: "", xmlOutput: "", error: "Failed to generate: " + errorMessage(e) };
+    }
+  }, [csvData, configs, rootKeyName, headers]);
+  const { jsonOutput, yamlOutput, xmlOutput } = generation;
+  const error = loadError || generation.error;
+
   const loadSheetData = (wb: XLSX.WorkBook, sheetName: string) => {
     const ws = wb.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    const data = XLSX.utils.sheet_to_json<CsvRow>(ws, { defval: "" });
     if (data.length > 0) {
-      const parsedHeaders = Object.keys(data[0] as any);
+      const parsedHeaders = Object.keys(data[0]);
       setHeaders(parsedHeaders);
       setCsvData(data);
 
@@ -40,7 +50,6 @@ export function CsvToJsonView() {
         };
       });
       setConfigs(newConfigs);
-      setJsonOutput(null);
       setError("");
     } else {
       setError("Selected sheet is empty");
@@ -57,7 +66,7 @@ export function CsvToJsonView() {
       setWorkbook(null);
       setSheetNames([]);
       setSelectedSheet("");
-      Papa.parse(file, {
+      Papa.parse<CsvRow>(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
@@ -76,7 +85,6 @@ export function CsvToJsonView() {
             };
           });
           setConfigs(newConfigs);
-          setJsonOutput(null);
           setError("");
         },
         error: (err) => {
@@ -97,8 +105,8 @@ export function CsvToJsonView() {
           } else {
             setError("No sheets found in Excel file.");
           }
-        } catch (err: any) {
-          setError("Error parsing Excel: " + err.message);
+        } catch (err) {
+          setError("Error parsing Excel: " + errorMessage(err));
         }
       };
       reader.readAsArrayBuffer(file);
@@ -140,25 +148,6 @@ export function CsvToJsonView() {
     });
   };
 
-  const generateJson = () => {
-    if (!csvData.length) return;
-    setError("");
-    
-    try {
-      const { jsonOutput: jOut, yamlOutput: yOut, xmlOutput: xOut } = generateOutputs(
-        csvData,
-        configs,
-        rootKeyName,
-        headers
-      );
-      setJsonOutput(jOut);
-      setYamlOutput(yOut);
-      setXmlOutput(xOut);
-    } catch (e: any) {
-      setError("Failed to generate: " + e.message);
-    }
-  };
-
   const downloadOutput = () => {
     if (!jsonOutput) return;
     let data = "";
@@ -188,11 +177,6 @@ export function CsvToJsonView() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
-  useEffect(() => {
-    generateJson();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [csvData, configs, rootKeyName]);
 
   return (
     <div className="w-full flex flex-col gap-6">

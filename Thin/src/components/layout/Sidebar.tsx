@@ -1,4 +1,4 @@
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type TabId } from '@/store/useAppStore';
 import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml, Music, TableProperties, Maximize, PlayCircle, FileText, FileCode2, Braces } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
@@ -82,7 +82,7 @@ export function Sidebar() {
                     className={`w-full justify-start gap-3 relative transition-all duration-300 font-medium ${
                       isActive ? 'shadow-md shadow-primary/20 bg-primary hover:bg-primary/90 text-[#0a2540]' : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
                     }`}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id as TabId)}
                   >
                     {isActive && (
                       <motion.div

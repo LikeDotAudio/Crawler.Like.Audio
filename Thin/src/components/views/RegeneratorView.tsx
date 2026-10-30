@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, FolderSearch, FileText, Upload } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { restoreFiles } from '@/lib/regeneratorEngine';
+import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
 
 export function RegeneratorView() {
   const [logFile, setLogFile] = useState<File | null>(null);
-  const [outputDirHandle, setOutputDirHandle] = useState<any>(null);
+  const [outputDirHandle, setOutputDirHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -20,8 +21,8 @@ export function RegeneratorView() {
 
   const handleBrowseDir = async () => {
     try {
-      if ((window as any).showDirectoryPicker) {
-        const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
+      if (window.showDirectoryPicker) {
+        const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
         setOutputDirHandle(handle);
         addLog(`Selected output directory: ${handle.name}`);
       } else {
@@ -59,13 +60,13 @@ export function RegeneratorView() {
         const item = e.dataTransfer.items[i];
         if (item.kind === 'file') {
           try {
-            // @ts-ignore - non-standard API but supported in chromium
+            if (!item.getAsFileSystemHandle) throw new Error('getAsFileSystemHandle unsupported');
             const handle = await item.getAsFileSystemHandle();
-            if (handle?.kind === 'directory') {
+            if (handle && isDirectoryHandle(handle)) {
               setOutputDirHandle(handle);
               addLog(`Selected output directory via drag & drop: ${handle.name}`);
-            } else if (handle?.kind === 'file') {
-              const file = await (handle as any).getFile();
+            } else if (handle && isFileHandle(handle)) {
+              const file = await handle.getFile();
               setLogFile(file);
               addLog(`Selected scrape file via drag & drop: ${file.name}`);
             }

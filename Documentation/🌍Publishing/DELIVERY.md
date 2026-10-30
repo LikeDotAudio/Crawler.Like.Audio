@@ -13,7 +13,8 @@ A push to `main` is a release of crawler.like.audio.
 ## Build and test
 
 - Thin: `cd Thin && npm ci && npm run build` (passes as of 2026-10-30; prerenders `/` with
-  every sidebar entry). `npm run lint` runs ESLint.
+  every sidebar entry). `npm run lint` runs ESLint: 0 errors as of 2026-10-30 (warnings
+  only), and CI runs it before the tests, so a new error blocks the deploy.
 - Thin tests: `cd Thin && npm test`. Thick tests: `cd Thick && python3 -m unittest discover -s tests`.
 - Thick: no build; `pip install -r Thick/requirements.txt`.
 - Smoke result: [SMOKE.md](../🧩Manual%20and%20Artifacts/SMOKE.md).
@@ -22,7 +23,7 @@ A push to `main` is a release of crawler.like.audio.
 
 - **The tests are small.** `Thin` has one guard (`test/base-path.test.mjs`: no hand-written
   root-absolute URL into `public/`), `Thick` covers the `.gitignore` matcher and where its
-  state lives. Neither drives a window. There is no lint step in CI.
+  state lives. Neither drives a window.
 - **The apk.audio window's export is built by the APK.audio root CI**, not by this
   workflow: root `ci.yml` *Build the Crawler* runs `npm ci && npm run build` with
   `CRAWLER_BASE_PATH` set to the folder the window opens, so the `/_next/` chunks and the

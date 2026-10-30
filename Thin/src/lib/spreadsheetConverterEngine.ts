@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { errorMessage } from "@/lib/utils";
 
 export type SupportedFormat = "xlsx" | "xls" | "csv" | "ods";
 
@@ -32,8 +33,8 @@ export async function parseSpreadsheet(file: File): Promise<ParseResult> {
         else if (ext === 'xlsx' || ext === 'xls') suggestedFormat = 'csv';
         
         resolve({ workbook: wb, suggestedFormat });
-      } catch (err: any) {
-        reject(new Error("Error parsing spreadsheet: " + err.message));
+      } catch (err) {
+        reject(new Error("Error parsing spreadsheet: " + errorMessage(err)));
       }
     };
     reader.onerror = () => {
@@ -76,8 +77,8 @@ export async function convertSpreadsheet(options: ConvertOptions): Promise<Conve
       const fileName = `${baseName}.${targetFormat}`;
       
       resolve({ blob, fileName });
-    } catch (err: any) {
-      reject(new Error("Failed to convert file: " + err.message));
+    } catch (err) {
+      reject(new Error("Failed to convert file: " + errorMessage(err)));
     }
   });
 }

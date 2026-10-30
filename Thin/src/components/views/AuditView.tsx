@@ -19,8 +19,8 @@ export function AuditView() {
 
   const handleBrowse = async () => {
     try {
-      if ((window as any).showDirectoryPicker) {
-        const handle = await (window as any).showDirectoryPicker();
+      if (window.showDirectoryPicker) {
+        const handle = await window.showDirectoryPicker();
         setDirHandle(handle);
         setSelectedFolder(handle.name);
         setAuditLogs([]);

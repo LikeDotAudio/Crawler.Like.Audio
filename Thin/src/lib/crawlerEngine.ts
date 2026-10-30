@@ -1,9 +1,11 @@
 import ignore from 'ignore';
-import { extensionEmojiMap } from '@/store/useAppStore';
+import { extensionEmojiMap, type GraphNode, type GraphEdge } from '@/store/useAppStore';
+import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
 import { astParser } from '@/lib/astParser';
+import { errorMessage } from "@/lib/utils";
 
 export interface CrawlOptions {
-  dirHandle: any;
+  dirHandle: FileSystemDirectoryHandle;
   respectGitIgnore: boolean;
   selectedExts: Set<string>;
   fallbackAll: boolean;
@@ -15,8 +17,8 @@ export interface CrawlResult {
   mapText: string;
   scrapeText: string;
   extractorText: string;
-  graphNodes: any[];
-  graphEdges: any[];
+  graphNodes: GraphNode[];
+  graphEdges: GraphEdge[];
   fileCount: number;
   dirCount: number;
   totalSize: number;
@@ -29,18 +31,18 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
     addCrawlLog('[INFO] Booting web-tree-sitter WASM engine...');
     await astParser.init();
     addCrawlLog('[SUCCESS] WebAssembly engine initialized for Python parsing.');
-  } catch (e: any) {
+  } catch (e) {
     console.error(e);
-    addCrawlLog(`[ERROR] Failed to load WASM engine: ${e.message || e}`);
+    addCrawlLog(`[ERROR] Failed to load WASM engine: ${errorMessage(e)}`);
   }
   
   let fileCount = 0;
   let dirCount = 0;
-  let extCounts: Record<string, number> = {};
+  const extCounts: Record<string, number> = {};
   let totalSize = 0;
   
-  let graphNodes: any[] = [];
-  let graphEdges: any[] = [];
+  const graphNodes: GraphNode[] = [];
+  const graphEdges: GraphEdge[] = [];
   
   let mapTextBuilder = `# Program Map:\n# Created: ${new Date().toLocaleString()}\n#\n`;
   let scrapeTextBuilder = `# ====================================================================================\n# EVERYTHING.LOG\n# Log started at: ${new Date().toLocaleString()}\n# ====================================================================================\n\n`;
@@ -67,7 +69,7 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
     return '';
   };
 
-  let ig = ignore();
+  const ig = ignore();
   if (respectGitIgnore) {
     try {
       const gitignoreHandle = await dirHandle.getFileHandle('.gitignore');
@@ -84,7 +86,7 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
   ig.add(['.git', 'node_modules', 'venv', '.crawler', '.next']);
 
   let globalTreeYIndex = 0;
-  let rootNodeId = `dir-root`;
+  const rootNodeId = `dir-root`;
   
   graphNodes.push({
     id: rootNodeId,
@@ -94,7 +96,7 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
   });
   globalTreeYIndex++;
 
-  const crawlDirectory = async (handle: any, path: string, depth = 0, parentNodeId: string = rootNodeId) => {
+  const crawlDirectory = async (handle: FileSystemDirectoryHandle, path: string, depth = 0, parentNodeId: string = rootNodeId) => {
     if (!checkIsCrawling()) return;
     
     try {
@@ -110,7 +112,7 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
         const currentY = globalTreeYIndex * 80;
         globalTreeYIndex++;
         
-        if (entry.kind === 'file') {
+        if (isFileHandle(entry)) {
           const rawExt = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : 'unknown';
           const ext = rawExt.toLowerCase();
           
@@ -158,7 +160,7 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
                   const metrics = astParser.extractMetrics(text);
                   
                   if (metrics.structures.length > 0) {
-                    metrics.structures.forEach((struct: any, idx: number) => {
+                    metrics.structures.forEach((struct, idx: number) => {
                       const structId = `${currentNodeId}-${struct.name}-${idx}`;
                       const structY = globalTreeYIndex * 80;
                       globalTreeYIndex++;
@@ -194,7 +196,7 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
               }
             } catch (e) {}
           }
-        } else if (entry.kind === 'directory') {
+        } else if (isDirectoryHandle(entry)) {
           dirCount++;
           mapTextBuilder += `${'  '.repeat(depth)}├── 📁 ${entry.name}/\n`;
           

@@ -1,22 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { generateConversions } from "@/lib/jsonToCsvEngine";
+import { generateConversions, type ConversionOutputs } from "@/lib/jsonToCsvEngine";
 import { Upload, FileCode2, Download, TableProperties, CodeXml, LayoutList, Table, FileJson } from "lucide-react";
 import { motion } from "framer-motion";
+import { errorMessage } from "@/lib/utils";
+
+const NO_OUTPUTS: ConversionOutputs = { processedData: [], csvOutput: "", yamlOutput: "", xmlOutput: "", jsonOutput: "" };
 
 export function JsonToCsvView() {
-  const [jsonData, setJsonData] = useState<any>(null);
-  const [csvOutput, setCsvOutput] = useState<string>("");
-  const [yamlOutput, setYamlOutput] = useState<string>("");
-  const [xmlOutput, setXmlOutput] = useState<string>("");
-  const [jsonOutput, setJsonOutput] = useState<string>("");
-  const [processedData, setProcessedData] = useState<any[]>([]);
+  const [jsonData, setJsonData] = useState<unknown>(null);
   const [activeTab, setActiveTab] = useState<"csv" | "excel" | "yaml" | "xml" | "json">("csv");
   const [viewMode, setViewMode] = useState<"raw" | "table">("raw");
-  const [error, setError] = useState("");
+  const [loadError, setError] = useState("");
   const [flattenArrays, setFlattenArrays] = useState(true);
+
+  // Outputs derive from the loaded JSON and the flatten switch; no effect copies them into state.
+  const conversion = useMemo((): ConversionOutputs & { error: string } => {
+    if (!jsonData) return { ...NO_OUTPUTS, error: "" };
+    try {
+      return { ...generateConversions(jsonData, flattenArrays), error: "" };
+    } catch (err) {
+      return { ...NO_OUTPUTS, error: "Failed to convert: " + errorMessage(err) };
+    }
+  }, [jsonData, flattenArrays]);
+  const { processedData, csvOutput, yamlOutput, xmlOutput, jsonOutput } = conversion;
+  const error = loadError || conversion.error;
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -29,27 +39,11 @@ export function JsonToCsvView() {
         const parsed = JSON.parse(text);
         setJsonData(parsed);
         setError("");
-        setCsvOutput("");
-      } catch (err: any) {
-        setError("Invalid JSON file: " + err.message);
+      } catch (err) {
+        setError("Invalid JSON file: " + errorMessage(err));
       }
     };
     reader.readAsText(file);
-  };
-
-  const generateCsv = () => {
-    if (!jsonData) return;
-    try {
-      const outputs = generateConversions(jsonData, flattenArrays);
-      setProcessedData(outputs.processedData);
-      setCsvOutput(outputs.csvOutput);
-      setYamlOutput(outputs.yamlOutput);
-      setXmlOutput(outputs.xmlOutput);
-      setJsonOutput(outputs.jsonOutput);
-      setError("");
-    } catch (err: any) {
-      setError("Failed to convert: " + err.message);
-    }
   };
 
   const downloadOutput = () => {
@@ -94,11 +88,6 @@ export function JsonToCsvView() {
     URL.revokeObjectURL(url);
   };
 
-  React.useEffect(() => {
-    generateCsv();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jsonData, flattenArrays]);
-
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="w-full space-y-8">
@@ -129,7 +118,7 @@ export function JsonToCsvView() {
           </motion.div>
         )}
 
-        {jsonData && (
+        {!!jsonData && (
           <div className="grid lg:grid-cols-2 gap-8">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
               <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl">
@@ -216,7 +205,7 @@ export function JsonToCsvView() {
                         </button>
                       </div>
                     )}
-                    {jsonData && (
+                    {!!jsonData && (
                       <button 
                         onClick={downloadOutput}
                         className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"

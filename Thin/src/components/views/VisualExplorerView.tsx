@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore, type GraphNode, type GraphEdge } from '@/store/useAppStore';
 import { ReactFlow, Background, Controls, MiniMap, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect } from 'react';
 import { Layers, ArrowRight, ArrowDown, FileText, FileX, Network } from 'lucide-react';
 
-function FlowMap({ nodes, edges }: { nodes: any[], edges: any[] }) {
+function FlowMap({ nodes, edges }: { nodes: GraphNode[], edges: GraphEdge[] }) {
   const { fitView } = useReactFlow();
 
   useEffect(() => {
@@ -52,16 +52,16 @@ export function VisualExplorerView() {
 
     let nodesToFilter = graphData.nodes;
     if (maxDepth !== 'all') {
-      nodesToFilter = nodesToFilter.filter((node: any) => node.data && node.data.depth <= maxDepth);
+      nodesToFilter = nodesToFilter.filter((node) => node.data && node.data.depth <= maxDepth);
     }
     
     if (!showFiles) {
-      nodesToFilter = nodesToFilter.filter((node: any) => node.data && node.data.label.startsWith('📁'));
+      nodesToFilter = nodesToFilter.filter((node) => node.data && node.data.label.startsWith('📁'));
     }
 
     const depthCounts: Record<number, number> = {};
 
-    const filteredNodes = nodesToFilter.map((node: any) => {
+    const filteredNodes = nodesToFilter.map((node) => {
       const d = node.data?.depth || 0;
       depthCounts[d] = (depthCounts[d] || 0) + 1;
       const indexAtDepth = depthCounts[d] - 1;
@@ -74,10 +74,10 @@ export function VisualExplorerView() {
       };
     });
       
-    const filteredNodeIds = new Set(filteredNodes.map((n: any) => n.id));
+    const filteredNodeIds = new Set(filteredNodes.map((n) => n.id));
     
     const filteredEdges = graphData.edges.filter(
-      (edge: any) => filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target)
+      (edge) => filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target)
     );
 
     return { nodes: filteredNodes, edges: filteredEdges };

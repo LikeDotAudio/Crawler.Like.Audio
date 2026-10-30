@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Upload, FileJson, Copy, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { prettyPrintJson } from "@/lib/utils";
+import { prettyPrintJson, errorMessage } from "@/lib/utils";
 
 export function JsonPrettyPrintView() {
   const [inputText, setInputText] = useState("");
@@ -22,8 +22,8 @@ export function JsonPrettyPrintView() {
         const text = e.target?.result as string;
         setInputText(text);
         formatJson(text);
-      } catch (err: any) {
-        setError("Error reading file: " + err.message);
+      } catch (err) {
+        setError("Error reading file: " + errorMessage(err));
         setErrorLine(null);
       }
     };
@@ -44,9 +44,9 @@ export function JsonPrettyPrintView() {
       setOutputText(formatted);
       setError("");
       setErrorLine(null);
-    } catch (err: any) {
-      setError("Invalid JSON: " + err.message);
-      const match = err.message.match(/line\s+(\d+)/i);
+    } catch (err) {
+      setError("Invalid JSON: " + errorMessage(err));
+      const match = errorMessage(err).match(/line\s+(\d+)/i);
       if (match) {
         setErrorLine(parseInt(match[1], 10));
       } else {

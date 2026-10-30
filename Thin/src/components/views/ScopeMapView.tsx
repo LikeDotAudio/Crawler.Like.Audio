@@ -36,11 +36,11 @@ export function ScopeMapView() {
   const [scannedFiles, setScannedFiles] = useState(0);
   const [totalFiles, setTotalFiles] = useState(0);
   const [totalFolders, setTotalFolders] = useState(0);
-  const [hoveredNode, setHoveredNode] = useState<{ node: any, x: number, y: number } | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<{ node: { data: TreeNode }, x: number, y: number } | null>(null);
 
   const handleSelectFolder = async () => {
     try {
-      // @ts-ignore
+      if (!window.showDirectoryPicker) throw new Error('File System Access API is not supported in this browser.');
       const handle = await window.showDirectoryPicker();
       setIsScanning(true);
       setTreeData(null);
@@ -67,11 +67,9 @@ export function ScopeMapView() {
   }, [treeData]);
 
   // Color scale for size heatmap
-  const sizeColorScale = useMemo(() => {
-    if (!treemapLayout) return () => EXT_COLORS["default"];
-    const maxVal = treemapLayout.value || 1;
-    return (val: number) => getSizeColor(val, maxVal);
-  }, [treemapLayout]);
+  const maxVal = treemapLayout?.value || 1;
+  const sizeColorScale = (val: number) =>
+    treemapLayout ? getSizeColor(val, maxVal) : EXT_COLORS["default"];
 
   const getColor = (node: d3.HierarchyRectangularNode<TreeNode>) => {
     if (node.data.type === "directory") return EXT_COLORS["folder"];
@@ -160,8 +158,8 @@ export function ScopeMapView() {
             <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
               <Maximize size={40} className="text-primary" />
             </div>
-            <h2 className="text-2xl font-semibold text-slate-200">Visualize your project's footprint</h2>
-            <p className="text-slate-400 max-w-md">Click "Select Folder" to scan a local directory and render a beautiful, interactive Treemap of all files and folders relative to their size.</p>
+            <h2 className="text-2xl font-semibold text-slate-200">Visualize your project&rsquo;s footprint</h2>
+            <p className="text-slate-400 max-w-md">Click &ldquo;Select Folder&rdquo; to scan a local directory and render a beautiful, interactive Treemap of all files and folders relative to their size.</p>
           </div>
         )}
 

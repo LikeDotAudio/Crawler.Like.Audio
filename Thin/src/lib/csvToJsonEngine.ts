@@ -1,5 +1,6 @@
 import * as jsyaml from "js-yaml";
 import { json2xml } from "xml-js";
+import { errorMessage } from "@/lib/utils";
 
 export type Role =
   | "Hierarchical Key"
@@ -17,26 +18,31 @@ export interface HeaderConfig {
   partName: string;
 }
 
+/** One parsed CSV/Excel row: header → cell. */
+export type CsvRow = Record<string, unknown>;
+/** One generated JSON object. */
+type OutNode = Record<string, unknown>;
+
 export interface GenerationResult {
-  jsonOutput: any;
+  jsonOutput: Record<string, OutNode[]> | null;
   yamlOutput: string;
   xmlOutput: string;
 }
 
-function groupBy(array: any[], key: string) {
-  return array.reduce((result: any, currentValue: any) => {
-    const val = currentValue[key];
+function groupBy(array: CsvRow[], key: string): Record<string, CsvRow[]> {
+  return array.reduce((result: Record<string, CsvRow[]>, currentValue: CsvRow) => {
+    const val = String(currentValue[key]);
     (result[val] = result[val] || []).push(currentValue);
     return result;
   }, {});
 }
 
 function buildHierarchy(
-  rows: any[],
+  rows: CsvRow[],
   parentKey: string,
   configs: Record<string, HeaderConfig>,
   headers: string[]
-): any[] {
+): OutNode[] {
   const levelConfigs = Object.values(configs)
     .filter((c) => c.nestedUnder === parentKey && c.role !== "Skip")
     .sort((a, b) => headers.indexOf(a.originalHeader) - headers.indexOf(b.originalHeader));
@@ -46,11 +52,11 @@ function buildHierarchy(
   );
 
   if (!firstGroupingConfig) {
-    const outputList: any[] = [];
+    const outputList: OutNode[] = [];
     const simpleConfigs = levelConfigs.filter((c) => ["Simple Value", "Sub Key"].includes(c.role));
 
     rows.forEach((row) => {
-      const node: any = {};
+      const node: OutNode = {};
       simpleConfigs.forEach((c) => {
         if (c.role === "Skip") return;
         let val = row[c.originalHeader];
@@ -69,11 +75,11 @@ function buildHierarchy(
 
   const groupKey = firstGroupingConfig.originalHeader;
   const grouped = groupBy(rows, groupKey);
-  const outputList: any[] = [];
+  const outputList: OutNode[] = [];
 
-  Object.entries(grouped).forEach(([keyValue, groupRows]: [string, any]) => {
-    const node: any = {};
-    let val: any = keyValue;
+  Object.entries(grouped).forEach(([keyValue, groupRows]) => {
+    const node: OutNode = {};
+    let val: string | boolean = keyValue;
     if (val === "true" || val === "True") val = true;
     if (val === "false" || val === "False") val = false;
 
@@ -83,7 +89,7 @@ function buildHierarchy(
       children.forEach((c) => {
         mergedChildren = { ...mergedChildren, ...c };
       });
-      node[val as string] = mergedChildren;
+      node[String(val)] = mergedChildren;
     } else if (firstGroupingConfig.role === "Hierarchical Key") {
       node[firstGroupingConfig.jsonKey] = val;
       node[firstGroupingConfig.partName] = buildHierarchy(groupRows, groupKey, configs, headers);
@@ -100,7 +106,7 @@ function buildHierarchy(
 }
 
 export function generateOutputs(
-  csvData: any[],
+  csvData: CsvRow[],
   configs: Record<string, HeaderConfig>,
   rootKeyName: string,
   headers: string[]
@@ -116,15 +122,15 @@ export function generateOutputs(
   let yamlOutput = "";
   try {
     yamlOutput = jsyaml.dump(finalJson);
-  } catch (yErr: any) {
-    yamlOutput = "# Error generating YAML: " + yErr.message;
+  } catch (yErr) {
+    yamlOutput = "# Error generating YAML: " + errorMessage(yErr);
   }
 
   let xmlOutput = "";
   try {
     xmlOutput = json2xml(JSON.stringify(finalJson), { compact: true, spaces: 4 });
-  } catch (xErr: any) {
-    xmlOutput = "<!-- XML Error: Keys cannot contain spaces or invalid characters -->\n" + xErr.message;
+  } catch (xErr) {
+    xmlOutput = "<!-- XML Error: Keys cannot contain spaces or invalid characters -->\n" + errorMessage(xErr);
   }
 
   return {
