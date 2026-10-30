@@ -12,4 +12,4 @@ Is `Crawler.Like.Audio` deployed? Written by `.apk.scripts/smoke.py` from the mo
 
 Re-run: `python3 .apk.scripts/smoke.py PODS/POD.THIN/Softapps/SCANALYZER_SUITE/SCANALYZER.Like.audio/Crawler.Like.Audio`
 
-<!-- smoke:sig ea2eca9edcbc since 2026-10-30 12:51 EDT -->
+<!-- smoke:sig 3d08dc268669 since 2026-10-30 12:51 EDT -->
