@@ -4,15 +4,34 @@ import configparser
 import os
 import datetime
 
+# Where the desktop half keeps its state: recent folders, the last URL, the process log.
+# That is ONE MACHINE'S HISTORY, so it lives in the user's config directory, never in the
+# repository — it used to be src/config.ini, tracked, and every run dirtied the checkout.
+# CRAWLER_CONFIG overrides the path outright.
+LEGACY_CONFIG = os.path.join(os.path.dirname(__file__), 'config.ini')
+
+
+def default_config_path():
+    override = os.environ.get('CRAWLER_CONFIG', '').strip()
+    if override:
+        return os.path.expanduser(override)
+    base = os.environ.get('XDG_CONFIG_HOME', '').strip() or os.path.join(os.path.expanduser('~'), '.config')
+    return os.path.join(base, 'crawler-like-audio', 'config.ini')
+
+
 class ConfigManager:
-    def __init__(self):
-        self.config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+    def __init__(self, config_path=None):
+        self.config_path = config_path or default_config_path()
         self.config = configparser.ConfigParser()
         self._load_config()
 
     def _load_config(self):
         if os.path.exists(self.config_path):
             self.config.read(self.config_path)
+        elif os.path.exists(LEGACY_CONFIG):
+            # A checkout from before the move: carry its state across once. The next save
+            # writes the new location; the old file is left for the user to delete.
+            self.config.read(LEGACY_CONFIG)
         
         # Ensure sections exist
         if 'General' not in self.config:
@@ -107,6 +126,7 @@ class ConfigManager:
 
     def _save_config(self):
         try:
+            os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
             with open(self.config_path, 'w') as configfile:
                 self.config.write(configfile)
         except Exception as e:

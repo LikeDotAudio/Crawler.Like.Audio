@@ -4,3 +4,5 @@
 scrapes/
 __pycache__/
 *.pyc
+# Thick runtime state lives in ~/.config/crawler-like-audio/config.ini (config_manager.py)
+Thick/src/config.ini
