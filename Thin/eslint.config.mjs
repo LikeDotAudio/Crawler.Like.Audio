@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party bundle served as-is (tree-sitter runtime).
+    "public/web-tree-sitter.js",
   ]),
 ]);
 

@@ -1,9 +1,12 @@
+import type { Parser, Language, Node } from 'web-tree-sitter';
 import { BASE_PATH } from './basePath';
 
-declare const TreeSitter: any;
+// layout.tsx loads public/web-tree-sitter.js and sets window.TreeSitter = Parser
+// with Parser.Language = Language. Type-only import: the bundle is never imported.
+declare const TreeSitter: typeof Parser & { Language: typeof Language };
 
 class AstParserService {
-  private parser: any = null;
+  private parser: Parser | null = null;
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
 
@@ -45,17 +48,19 @@ class AstParserService {
     if (!this.parser || !this.isInitialized) {
       throw new Error('AST Parser not initialized. Call init() first.');
     }
-    return this.parser.parse(code);
+    const tree = this.parser.parse(code);
+    if (!tree) throw new Error('AST Parser returned no tree.');
+    return tree;
   }
 
-  extractMetrics(code: string, fileName?: string) {
+  extractMetrics(code: string) {
     const tree = this.parse(code);
     let classCount = 0;
     let functionCount = 0;
     const structures: { type: 'class' | 'function'; name: string }[] = [];
 
     // Traverse the syntax tree for specific nodes
-    const walk = (node: any) => {
+    const walk = (node: Node) => {
       if (node.type === 'class_definition') {
         classCount++;
         const nameNode = node.childForFieldName('name');
