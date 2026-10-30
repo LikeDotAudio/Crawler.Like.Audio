@@ -1,5 +1,7 @@
 # Crawler.Like.Audio
 
+**Wiki:** [Documentation/README.md](Documentation/README.md) — principles, architecture, delivery, audits.
+
 A folder-and-file crawler with a set of conversion utilities around it, shipped as
 **two halves in one repo**:
 

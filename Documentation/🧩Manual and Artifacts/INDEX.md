@@ -7,5 +7,6 @@ How to use it and how it is built.
 <!-- wiki:index -->
 | Page | What |
 |---|---|
-| [ARCHITECTURE_NOTES.md](ARCHITECTURE_NOTES.md) | Architecture Notes & Technical Specs — Crawler.Like.Audio |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture — Crawler.Like.Audio |
+| [SMOKE.md](SMOKE.md) | Smoke test — Crawler.Like.Audio |
 <!-- /wiki:index -->
