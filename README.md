@@ -1,10 +1,25 @@
 # Crawler.Like.Audio
 
-A powerful, 100% client-side developer utility suite built entirely with **Next.js, TypeScript, and WebAssembly**. It is designed to run statically in the browser with absolutely zero backend dependencies or local installations required.
+A folder-and-file crawler with a set of conversion utilities around it, shipped as
+**two halves in one repo**:
 
-## 🚀 The Suite: How Every Page Works
+| Half | What it is | Entry |
+| :--- | :--- | :--- |
+| **`Thin/`** | The browser app — Next.js 16 static export (`output: "export"` → `Thin/out/`), TypeScript, WebAssembly. Runs client-side; deployed to `crawler.like.audio`. | `cd Thin && npm run dev` |
+| **`Thick/`** | The desktop app — Python 3 + Tkinter, twelve notebook tabs (`Thick/src/gui_module.py`), settings and history in `Thick/src/config.ini`. | `Thick/run_crawler.sh` (or `python3 Thick/main.py`) |
 
-The application is divided into over 15 hyper-capable modules accessible via the sidebar. Each module pushes the limits of modern browser APIs to perform tasks that traditionally required heavy backend servers or native desktop applications.
+Inside APK.audio it sits as a submodule of `SCANALYZER.Like.audio` (`01_CAPTURES/CAPTURE.crawler`
+files it under the Scanalyzer's capture stage).
+
+## 🚀 Thin — the browser suite, page by page
+
+Fifteen views, grouped in the sidebar (`Thin/src/components/layout/Sidebar.tsx`) as
+*Local Folder and File Crawler* (File Crawler, Visual Explorer, Program Map, SCOPE Map,
+Project Audit, Extractor, Regenerate), *Web & Generation* (Web Scraper), *Physical*
+(Hardware Auditor, Network Sweeper), *Data Conversion* (PDF to MD, CSV Importer & Shuffler,
+JSON Importer & Shuffler, Spreadsheet Converter) and *Media Conversion* (Audio Converter).
+Two more views exist in code but have no sidebar entry: `JsonConverterView` and
+`JsonPrettyPrintView`.
 
 ### 1. 🔍 File Crawler
 The core engine of the suite. It uses the modern **File System Access API** to read local directories directly in your browser.
@@ -46,8 +61,14 @@ A clever browser-based LAN scanner.
 
 ### 8. 🌐 Web Scraper
 A lightweight utility for converting websites to text.
-* Enter any public URL, and the scraper will fetch the raw HTML.
+* Enter any public URL, and the scraper will fetch the raw HTML **through the public
+  `api.allorigins.win` CORS proxy** (`WebCrawlerView.tsx`) — the one page whose request
+  leaves the browser for a third party: the proxy sees every URL you scrape.
 * It then uses client-side parsing (Turndown) to strip away the noise and convert the webpage directly into clean, readable Markdown.
+
+### 9. 📝 Extractor
+Shows the text the File Crawler's deep crawl extracted (`extractorText` in the Zustand store)
+and downloads it as `Extraction_<date>.md`.
 
 ### 10. 📄 PDF to MD
 A local document extraction tool.
@@ -61,7 +82,9 @@ A powerful suite of data ingestion and shuffling utilities built with `papaparse
 * **Spreadsheet Converter:** Read natively complex spreadsheet binaries (`.xlsx`, `.csv`, `.ods`, `.numbers`) and convert them into clean formats, directly in the client.
 
 ### 12. 🎵 Audio Converter
-A robust browser-side media encoder leveraging native Web Audio APIs and CDN-imported `lamejs`.
+A robust browser-side media encoder leveraging native Web Audio APIs and `lamejs`, loaded
+lazily from cdnjs (`<Script src=".../lamejs/1.2.1/lame.min.js">`) — the page needs the
+network once to fetch the encoder, never to send audio.
 * **Universal Decode:** Drops any modern audio file (`.wav`, `.flac`, `.m4a`) to instantly decode its buffer.
 * **Client-side Encoding:** Re-encodes the raw audio into an optimized `.mp3` file, relying strictly on your CPU's client-side processing without uploading the audio file anywhere.
 
@@ -72,18 +95,44 @@ The inverse of the File Crawler.
 
 ---
 
-## 🛠️ Architecture
+## 🖥️ Thick — the desktop half
 
-* **Frontend Framework:** Next.js 16+ (App Router, Turbopack)
+`Thick/main.py` opens `FolderCrawlerApp` (Tkinter) on twelve tabs: **1 Select Folder,
+2 File Types, 3 View Logs, 4 Visual Explorer, 5 Regenerate, 6 USB Devices, 7 Web Crawler,
+8 PDF to MD, 9 CSV to JSON, 10 JSON to CSV, 11 JSON Format, 12 Pretty Print** — the same
+crawl → `EVERYTHING.LOG` / `MAP.txt` → regenerate loop as Thin, plus desktop-only reach
+(USB enumeration, PyMuPDF/pymupdf4llm for PDFs, pinned offline on purpose — see
+`Thick/requirements.txt`). `run_crawler.sh` runs it with the system `/usr/bin/python3` and
+clears `VIRTUAL_ENV` so an editor's venv cannot hijack it. `Thick/Audit/` holds research
+notes (Apple TV, Chromecast, DNS, SNMP, browser-native audits) for future pages.
+
+---
+
+## 🛠️ Architecture (Thin)
+
+* **Frontend Framework:** Next.js 16 (App Router, Turbopack), static export
 * **Language:** TypeScript
 * **Styling:** Tailwind CSS v4 + shadcn/ui
-* **State Management:** Zustand
-* **Parsing:** Web-Tree-Sitter (Wasm)
-* **Deployment Target:** Static Export (`out/`) targeting `crawler.like.audio`
+* **State Management:** Zustand (`Thin/src/store/useAppStore.ts`)
+* **Parsing:** web-tree-sitter + tree-sitter-wasms (WebAssembly)
+* **Graphs:** @xyflow/react (Visual Explorer), d3-hierarchy (SCOPE Map)
+* **Deployment Target:** Static Export (`Thin/out/`) targeting `crawler.like.audio`
 
-Because this project is designed as a **Static Frontend**, there is no backend server. All hardware scanning, network sweeping, and file parsing happens strictly within the secure sandbox of the user's browser execution thread.
+There is no backend server. File crawling, parsing, hardware enumeration, network sweeping
+and conversions run in the browser sandbox; the two network touches are the Web Scraper's
+CORS proxy and the Audio Converter's one-time encoder fetch, both named above.
+
+## 🚢 Deployment
+
+`.github/workflows/` builds `Thin` and FTP-deploys `Thin/out/` to `crawler.like.audio` on
+**every push to `main`** (password from the `FTP_PASSWORD` secret). A push is a release.
 
 ## 💻 Running Locally
+
+Thick: `Thick/run_crawler.sh` (Linux/macOS) or `Thick/run_crawler.bat` (Windows);
+dependencies via `pip install -r Thick/requirements.txt` (or `Thick/installation.py`).
+
+Thin:
 
 1. Install dependencies:
 ```bash
