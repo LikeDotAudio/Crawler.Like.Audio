@@ -40,5 +40,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# @distube/ytdl-core decipher debug dumps (saveDebugFile writes <ts>-player-script.js into cwd)
-*-player-script.js

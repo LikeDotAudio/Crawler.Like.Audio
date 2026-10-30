@@ -35,7 +35,7 @@ Crawler.like.audio is a powerful, browser-based multi-tool built with Next.js, R
 - **Styling:** Tailwind CSS (v4) with meticulously crafted dark mode, neon accents, and `framer-motion` micro-animations.
 - **Visualizations:** `d3-hierarchy` for Treemaps, `@xyflow/react` for node graphs, `recharts` for data graphs.
 - **File Processing:** `papaparse` (CSV), `xlsx` (Spreadsheets), `pdfjs-dist` (PDFs), `js-yaml` (YAML).
-- **Audio & Media:** `lamejs` (Audio), `youtube-dl-exec` (Media Downloading).
+- **Audio & Media:** `lamejs` (MP3 encoding in the browser).
 
 ## 🚀 Getting Started
 
