@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store/useAppStore';
-import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml, Music, TableProperties, Maximize, PlayCircle, FileText } from 'lucide-react';
+import { Search, Network as NetworkIcon, Settings, Globe, FileType, RefreshCw, ShieldAlert, Cpu, Wifi, FolderTree, Table, FileJson, CodeXml, Music, TableProperties, Maximize, PlayCircle, FileText, FileCode2, Braces } from 'lucide-react';
 import { SpiderLogo } from './SpiderLogo';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -39,6 +39,8 @@ export function Sidebar() {
         { id: 'pdf-to-md', label: 'PDF to MD', icon: FileType },
         { id: 'csv-to-json', label: 'CSV Importer & Shuffler', icon: Table },
         { id: 'json-to-csv', label: 'JSON Importer & Shuffler', icon: FileJson },
+        { id: 'json-converter', label: 'JSON → YAML / XML', icon: FileCode2 },
+        { id: 'json-pretty-print', label: 'JSON Pretty Printer', icon: Braces },
         { id: 'spreadsheet-converter', label: 'Spreadsheet Converter', icon: TableProperties },
       ]
     },

@@ -6,20 +6,19 @@ A folder-and-file crawler with a set of conversion utilities around it, shipped 
 | Half | What it is | Entry |
 | :--- | :--- | :--- |
 | **`Thin/`** | The browser app — Next.js 16 static export (`output: "export"` → `Thin/out/`), TypeScript, WebAssembly. Runs client-side; deployed to `crawler.like.audio`. | `cd Thin && npm run dev` |
-| **`Thick/`** | The desktop app — Python 3 + Tkinter, twelve notebook tabs (`Thick/src/gui_module.py`), settings and history in `Thick/src/config.ini`. | `Thick/run_crawler.sh` (or `python3 Thick/main.py`) |
+| **`Thick/`** | The desktop app — Python 3 + Tkinter, twelve notebook tabs (`Thick/src/gui_module.py`), settings and history in `~/.config/crawler-like-audio/config.ini` (`CRAWLER_CONFIG` overrides). | `Thick/run_crawler.sh` (or `python3 Thick/main.py`) |
 
 Inside APK.audio it sits as a submodule of `SCANALYZER.Like.audio` (`01_CAPTURES/CAPTURE.crawler`
 files it under the Scanalyzer's capture stage).
 
 ## 🚀 Thin — the browser suite, page by page
 
-Fifteen views, grouped in the sidebar (`Thin/src/components/layout/Sidebar.tsx`) as
+Seventeen views, grouped in the sidebar (`Thin/src/components/layout/Sidebar.tsx`) as
 *Local Folder and File Crawler* (File Crawler, Visual Explorer, Program Map, SCOPE Map,
 Project Audit, Extractor, Regenerate), *Web & Generation* (Web Scraper), *Physical*
 (Hardware Auditor, Network Sweeper), *Data Conversion* (PDF to MD, CSV Importer & Shuffler,
-JSON Importer & Shuffler, Spreadsheet Converter) and *Media Conversion* (Audio Converter).
-Two more views exist in code but have no sidebar entry: `JsonConverterView` and
-`JsonPrettyPrintView`.
+JSON Importer & Shuffler, JSON → YAML / XML, JSON Pretty Printer, Spreadsheet Converter) and
+*Media Conversion* (Audio Converter).
 
 ### 1. 🔍 File Crawler
 The core engine of the suite. It uses the modern **File System Access API** to read local directories directly in your browser.
