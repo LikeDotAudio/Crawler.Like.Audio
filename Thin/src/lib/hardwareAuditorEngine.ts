@@ -1,3 +1,24 @@
+/**
+ * hardwareAuditorEngine.ts — the WebUSB half of HardwareAuditorView: dump a
+ * device's descriptors (connectAndDumpDevice) and stream interface 0's IN
+ * endpoint (startUsbStreamEngine). Web Bluetooth, Web Serial and WebRTC are
+ * driven from the view itself.
+ *
+ * EVERY ONE OF THE BROWSER PROMPTS fails differently. A refused prompt throws;
+ * an unsupported API is missing from `navigator` entirely; a device claimed by
+ * a kernel driver opens and then errors on transfer. So every entry point
+ * guards on the API existing before it is called, and "not supported",
+ * "declined" and "in use" are reported as different answers — collapsing them
+ * into one error makes the tool useless.
+ *
+ * All of them are gated on a secure context and on a user gesture: none of this
+ * can be started from page load, and calling it outside a click handler fails
+ * in a way that looks like a refusal.
+ *
+ * READ-ONLY BY INTENT. It reads descriptors and IN endpoints; it must never
+ * write to an endpoint or pair.
+ */
+
 import { errorMessage } from "@/lib/utils";
 
 export interface UsbLogCallback {

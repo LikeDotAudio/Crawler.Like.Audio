@@ -1,3 +1,22 @@
+/**
+ * auditEngine.ts — walks a directory the user has granted through the File
+ * System Access API and runs every auditor in ALL_AUDITORS over each file.
+ *
+ * Owns: the walk, the .gitignore filter, and the log/issue callbacks. It does
+ * NOT own what counts as a finding — each auditor in ./audits/ decides that,
+ * and this file must stay ignorant of their rules so a new auditor is one file.
+ *
+ * Runs entirely in the browser. Nothing is uploaded and nothing is written back
+ * to the chosen directory: the handle is used read-only, and it must stay that
+ * way — the user granted a folder to be looked at, not edited.
+ *
+ * WHAT A CLEAN RUN DOES NOT MEAN. These are regex heuristics over a text scan,
+ * not a scanner. A clean result means "none of the patterns in ./audits/
+ * matched", and a user may not conclude the tree holds no secret, no dead code
+ * and no unreachable endpoint. Read the auditor before quoting its result —
+ * secrets.ts in particular is documented at its own head.
+ */
+
 import ignore from 'ignore';
 import { ALL_AUDITORS } from '@/lib/audits';
 import { AuditContext, AuditSharedState } from '@/lib/audits/types';
