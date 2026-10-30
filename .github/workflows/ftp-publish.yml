@@ -19,9 +19,19 @@ jobs:
         with:
           node-version: '20'
 
+      # npm ci installs exactly what package-lock.json says; npm install could
+      # resolve something newer on the runner than was tested.
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
         working-directory: ./Thin
+
+      - name: Test Thin
+        run: npm test
+        working-directory: ./Thin
+
+      - name: Test Thick
+        run: python3 -m unittest discover -s tests
+        working-directory: ./Thick
 
       - name: Build Next.js Static Export
         run: npm run build

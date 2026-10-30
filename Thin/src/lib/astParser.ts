@@ -1,3 +1,5 @@
+import { BASE_PATH } from './basePath';
+
 declare const TreeSitter: any;
 
 class AstParserService {
@@ -18,15 +20,15 @@ class AstParserService {
         await TreeSitter.init({
           locateFile(path: string) {
             if (path.endsWith('tree-sitter.wasm')) {
-              return '/web-tree-sitter.wasm';
+              return `${BASE_PATH}/web-tree-sitter.wasm`;
             }
-            return '/' + path;
+            return `${BASE_PATH}/` + path;
           },
         });
         
         this.parser = new TreeSitter();
         
-        const pythonLanguage = await TreeSitter.Language.load('/tree-sitter-python.wasm');
+        const pythonLanguage = await TreeSitter.Language.load(`${BASE_PATH}/tree-sitter-python.wasm`);
         this.parser.setLanguage(pythonLanguage);
         
         this.isInitialized = true;

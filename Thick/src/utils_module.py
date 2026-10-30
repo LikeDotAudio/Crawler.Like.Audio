@@ -85,8 +85,14 @@ class GitIgnoreMatcher:
         regex_body = regex_body.replace('___DOUBLE_STAR___', '.*')
 
         if anchored:
-            if re.match(regex_body, rel_path):
-                return True
+            # Anchored to the root, and like git it covers what is under a match:
+            # "/build" skips build/x.o too. fnmatch.translate ends in \Z, so the
+            # whole path alone never matched; each leading prefix is tried instead.
+            parts = rel_path.split('/')
+            for i in range(1, len(parts) + 1):
+                if re.match(regex_body, '/'.join(parts[:i])):
+                    return True
+            return False
         else:
             # If not anchored, it can match any suffix of the path
             # or it can match any component

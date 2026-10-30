@@ -12,7 +12,9 @@ feature list is the repo [README](../../README.md); this page is the map.
 | **Thick** (desktop) | `Thick/run_crawler.sh` (Linux/macOS), `run_crawler.bat` (Windows), or `python3 Thick/main.py` | `pip install -r Thick/requirements.txt` (or `Thick/installation.py`) |
 
 In the APK.audio OS the window opens `Thin/out/index.html` (`display.json` `app`), which
-exists only after a build.
+exists only after a build, and only works from that deep folder when built with
+`CRAWLER_BASE_PATH` set to it (`next.config.ts` → `basePath`; hand-written URLs into `public/`
+read the same value through `src/lib/basePath.ts`).
 
 ## Thin — Next.js static export
 

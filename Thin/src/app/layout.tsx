@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { BASE_PATH } from "@/lib/basePath";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -27,7 +28,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col text-foreground font-sans" suppressHydrationWarning>
         <Script id="tree-sitter-loader" type="module" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
-            import { Parser, Language } from '/web-tree-sitter.js';
+            import { Parser, Language } from '${BASE_PATH}/web-tree-sitter.js';
             Parser.Language = Language;
             window.TreeSitter = Parser;
           `
