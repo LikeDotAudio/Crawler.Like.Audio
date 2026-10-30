@@ -27,8 +27,11 @@ export interface UsbLogCallback {
 
 export const connectAndDumpDevice = async (device: USBDevice, addLog: UsbLogCallback) => {
   addLog(`[SYSTEM] Connecting to ${device.productName || 'Device'}...`);
+  // A dump borrows the device and gives it back: left open, the next application
+  // (or this page's stream) finds it busy.
+  const openedHere = !device.opened;
   try {
-    await device.open();
+    if (openedHere) await device.open();
     addLog(`[SYSTEM] Device opened. Configuration: ${device.configuration?.configurationValue || 'None'}`);
     
     addLog(`[INFO] USB Version: ${device.usbVersionMajor}.${device.usbVersionMinor}`);
@@ -66,6 +69,8 @@ export const connectAndDumpDevice = async (device: USBDevice, addLog: UsbLogCall
     if (errorMessage(e).includes('Access denied')) {
       addLog(`[HINT] OS Kernel has claimed this device (e.g., keyboard/mouse). Cannot read raw packets without unbinding the kernel driver.`);
     }
+  } finally {
+    if (openedHere && device.opened) await device.close().catch(() => {});
   }
 };
 
@@ -76,11 +81,16 @@ export const startUsbStreamEngine = async (
   onStreamStateChange: (isStreaming: boolean) => void
 ) => {
   if (!selectedUsb) return;
+  // What this loop takes it releases when the loop stops, however it stops.
+  let claimed = false;
+  const openedHere = !selectedUsb.opened;
   try {
+    if (openedHere) await selectedUsb.open();
     if (!selectedUsb.configuration) {
        await selectedUsb.selectConfiguration(1);
     }
     await selectedUsb.claimInterface(0);
+    claimed = true;
     onStreamStateChange(true);
     streamActive.current = true;
     addLog(`[STREAM] Claimed Interface 0. Starting interrupt loop...`);
@@ -121,5 +131,11 @@ export const startUsbStreamEngine = async (
     } else if (msg.includes('protected class')) {
       addLog(`[HINT] WebUSB blocks access to HID (Keyboard/Mouse), Audio/MIDI, Video, and Mass Storage devices for security. Try the Web MIDI API instead for MIDI devices!`);
     }
+  } finally {
+    streamActive.current = false;
+    onStreamStateChange(false);
+    if (claimed) await selectedUsb.releaseInterface(0).catch(() => {});
+    if (openedHere && selectedUsb.opened) await selectedUsb.close().catch(() => {});
+    if (claimed) addLog(`[STREAM] Released Interface 0.`);
   }
 };

@@ -54,10 +54,12 @@ interface USBDevice {
   deviceSubclass: number;
   configuration: USBConfiguration | null;
   configurations: USBConfiguration[];
+  readonly opened: boolean;
   open(): Promise<void>;
   close(): Promise<void>;
   selectConfiguration(configurationValue: number): Promise<void>;
   claimInterface(interfaceNumber: number): Promise<void>;
+  releaseInterface(interfaceNumber: number): Promise<void>;
   controlTransferIn(setup: USBControlTransferParameters, length: number): Promise<USBInTransferResult>;
   transferIn(endpointNumber: number, length: number): Promise<USBInTransferResult>;
 }
