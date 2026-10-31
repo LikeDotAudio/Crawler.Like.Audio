@@ -3,6 +3,7 @@ import { extensionEmojiMap, type GraphNode, type GraphEdge } from '@/store/useAp
 import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
 import { astParser } from '@/lib/astParser';
 import { errorMessage } from "@/lib/utils";
+import { buildCorpus, extOf, isSkippedDir, isTextFile, wantsAst, type CorpusEntry, type AstMetrics } from '@/lib/corpusFormat';
 
 export interface CrawlOptions {
   dirHandle: FileSystemDirectoryHandle;
@@ -14,7 +15,9 @@ export interface CrawlOptions {
 }
 
 export interface CrawlResult {
+  /** MAP.txt (crawler-corpus v1). */
   mapText: string;
+  /** EVERYTHING.LOG (crawler-corpus v1): the map, then every text file. */
   scrapeText: string;
   extractorText: string;
   graphNodes: GraphNode[];
@@ -44,9 +47,9 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
   const graphNodes: GraphNode[] = [];
   const graphEdges: GraphEdge[] = [];
   
-  let mapTextBuilder = `# Program Map:\n# Created: ${new Date().toLocaleString()}\n#\n`;
-  let scrapeTextBuilder = `# ====================================================================================\n# EVERYTHING.LOG\n# Log started at: ${new Date().toLocaleString()}\n# ====================================================================================\n\n`;
-  let extractorTextBuilder = `# ====================================================================================\n# COMMENTS AND MARKDOWN EXTRACTION\n# Log started at: ${new Date().toLocaleString()}\n# ====================================================================================\n\n`;
+  const created = new Date().toLocaleString();
+  const corpusEntries: CorpusEntry[] = [];
+  let extractorTextBuilder = `# ====================================================================================\n# COMMENTS AND MARKDOWN EXTRACTION\n# Log started at: ${created}\n# ====================================================================================\n\n`;
 
   const extractCommentsAndMarkdown = (text: string, ext: string, path: string, entryName: string) => {
     let extracted = '';
@@ -83,7 +86,8 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
   } else {
     addCrawlLog('[INFO] Ignoring .gitignore rules as requested by user.');
   }
-  ig.add(['.git', 'node_modules', 'venv', '.crawler', '.next']);
+  // The folders every crawl skips are corpusFormat.isSkippedDir — the same
+  // rule Thick applies (Contract/corpus.v1.json).
 
   let globalTreeYIndex = 0;
   const rootNodeId = `dir-root`;
@@ -100,10 +104,17 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
     if (!checkIsCrawling()) return;
     
     try {
-      for await (const entry of handle.values()) {
+      // Sorted (dirs first, then by name) so the graph and the corpus come out
+      // the same on every run and in the same order as Thick's.
+      const children: FileSystemHandle[] = [];
+      for await (const entry of handle.values()) children.push(entry);
+      children.sort((a, b) => a.kind !== b.kind ? (a.kind === 'directory' ? -1 : 1) : a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+
+      for (const entry of children) {
         if (!checkIsCrawling()) break;
         
         const relativePath = path === '/' ? entry.name : path.substring(1) + entry.name;
+        if (entry.kind === 'directory' && isSkippedDir(entry.name)) continue;
         const isIgnored = ig.ignores(entry.kind === 'directory' ? relativePath + '/' : relativePath);
         
         if (isIgnored) continue;
@@ -113,15 +124,15 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
         globalTreeYIndex++;
         
         if (isFileHandle(entry)) {
-          const rawExt = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : 'unknown';
-          const ext = rawExt.toLowerCase();
+          const ext = extOf(entry.name);
           
           if (fallbackAll || selectedExts.has(ext)) {
             fileCount++;
             const emoji = extensionEmojiMap[ext] || '📄';
             
-            mapTextBuilder += `${'  '.repeat(depth)}├── ${emoji} ${entry.name}\n`;
-            
+            const corpusEntry: CorpusEntry = { path: relativePath, kind: 'file', content: null, metrics: null };
+            corpusEntries.push(corpusEntry);
+
             if (fileCount % 500 === 0) {
               addCrawlLog(`[INFO] Scanned ${fileCount} files so far...`);
             }
@@ -145,19 +156,20 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
               totalSize += file.size;
               extCounts[ext] = (extCounts[ext] || 0) + 1;
               
-              try {
-                const text = await file.text();
-                scrapeTextBuilder += `\n\n# --- File: ${path}${entry.name} ---\n`;
-                scrapeTextBuilder += text;
-                extractorTextBuilder += extractCommentsAndMarkdown(text, ext, path, entry.name);
-              } catch(e) {
-                console.error(`Failed reading text from ${entry.name}:`, e);
-              }
-
-              if (ext === '.py' && file.size < 1024 * 500) {
+              if (isTextFile(entry.name)) {
                 try {
                   const text = await file.text();
-                  const metrics = astParser.extractMetrics(text);
+                  corpusEntry.content = text;
+                  extractorTextBuilder += extractCommentsAndMarkdown(text, ext, path, entry.name);
+                } catch(e) {
+                  console.error(`Failed reading text from ${entry.name}:`, e);
+                }
+              }
+
+              if (corpusEntry.content != null && wantsAst(entry.name, file.size)) {
+                try {
+                  const metrics: AstMetrics = astParser.extractMetrics(corpusEntry.content);
+                  corpusEntry.metrics = metrics;
                   
                   if (metrics.structures.length > 0) {
                     metrics.structures.forEach((struct, idx: number) => {
@@ -192,13 +204,15 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
                   if (metrics.classCount > 0 || metrics.functionCount > 0) {
                     addCrawlLog(`[AST] ${file.name} -> ${metrics.classCount} classes, ${metrics.functionCount} functions`);
                   }
-                } catch(e) {}
+                } catch(e) {
+                  // WASM not booted or the file would not parse: no metrics for it
+                }
               }
             } catch (e) {}
           }
         } else if (isDirectoryHandle(entry)) {
           dirCount++;
-          mapTextBuilder += `${'  '.repeat(depth)}├── 📁 ${entry.name}/\n`;
+          corpusEntries.push({ path: relativePath, kind: 'dir' });
           
           graphNodes.push({
             id: currentNodeId,
@@ -226,9 +240,11 @@ export const runCrawler = async (options: CrawlOptions): Promise<CrawlResult | n
   
   if (!checkIsCrawling()) return null;
 
+  const corpus = buildCorpus(dirHandle.name, corpusEntries, created);
+
   return {
-    mapText: mapTextBuilder,
-    scrapeText: scrapeTextBuilder,
+    mapText: corpus.mapText,
+    scrapeText: corpus.everythingText,
     extractorText: extractorTextBuilder,
     graphNodes,
     graphEdges,

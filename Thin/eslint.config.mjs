@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored third-party bundle served as-is (tree-sitter runtime).
     "public/web-tree-sitter.js",
+    // pdf.js worker copied from node_modules (npm run sync:pdf-worker).
+    "public/pdf.worker.min.js",
   ]),
 ]);
 

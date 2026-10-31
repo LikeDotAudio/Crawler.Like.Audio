@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Globe, Download, Play, SearchCode } from 'lucide-react';
 import { useState } from 'react';
 import TurndownService from 'turndown';
+import { fetcher } from '@/lib/fetcher';
+import { errorMessage } from '@/lib/utils';
 
 export function WebCrawlerView() {
   const [url, setUrl] = useState('');
@@ -23,42 +25,31 @@ export function WebCrawlerView() {
     setIsLoading(true);
     
     try {
-      console.log(`[Scraper] Starting scrape for URL: ${url}`);
-      // Using allorigins as a public CORS proxy for demonstration
-      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      // Straight from the browser (src/lib/fetcher.ts): no third-party proxy.
+      const page = await fetcher.fetchText(url);
+      const html = page.text;
       
-      console.log(`[Scraper] Proxy response status: ${response.status}`);
+      // Parse HTML and convert to clean Markdown
+      const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`[Scraper] Proxy data received, contents length: ${data.contents?.length || 0}`);
-        const html = data.contents;
-        
-        // Parse HTML and convert to clean Markdown
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        
-        // Remove scripts, styles, and often noisy elements
-        doc.querySelectorAll('script, style, noscript, iframe, svg, nav, footer, header').forEach(el => el.remove());
-        
-        const turndownService = new TurndownService({
-          headingStyle: 'atx',
-          codeBlockStyle: 'fenced',
-          bulletListMarker: '-',
-          hr: '---'
-        });
-        
-        // Remove empty links or useless span wrappers if needed, but Turndown is usually smart enough
-        const markdown = turndownService.turndown(doc.body);
-        
-        console.log(`[Scraper] Extraction successful. Markdown length: ${markdown.length}`);
-        setOutput(`Scraping: ${url}\n\n${markdown}`);
-      } else {
-        console.error(`[Scraper Error] Proxy returned status: ${response.status} ${response.statusText}`);
-        setError('Failed to fetch the URL via proxy.');
-      }
+      // Remove scripts, styles, and often noisy elements
+      doc.querySelectorAll('script, style, noscript, iframe, svg, nav, footer, header').forEach(el => el.remove());
+      
+      const turndownService = new TurndownService({
+        headingStyle: 'atx',
+        codeBlockStyle: 'fenced',
+        bulletListMarker: '-',
+        hr: '---'
+      });
+      
+      // Remove empty links or useless span wrappers if needed, but Turndown is usually smart enough
+      const markdown = turndownService.turndown(doc.body);
+      
+      console.log(`[Scraper] Extraction successful. Markdown length: ${markdown.length}`);
+      setOutput(`Scraping: ${url}\n\n${markdown}`);
     } catch (e) {
       console.error("[Scraper Exception]", e);
-      setError('An error occurred during scraping.');
+      setError(errorMessage(e));
     } finally {
       setIsLoading(false);
     }

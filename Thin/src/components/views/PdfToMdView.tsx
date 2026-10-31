@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { FileType, Upload, Download, FileText } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { BASE_PATH } from '@/lib/basePath';
 
 export function PdfToMdView() {
   const [output, setOutput] = useState('');
@@ -14,8 +15,11 @@ export function PdfToMdView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Configure worker for pdfjs-dist
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    // The worker is served from public/ like the tree-sitter WASM, so the page
+    // works offline and from the deep APK.audio path. public/pdf.worker.min.js
+    // is copied from node_modules (`npm run sync:pdf-worker`); a test fails when
+    // its version drifts from pdfjs-dist's.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE_PATH}/pdf.worker.min.js`;
   }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

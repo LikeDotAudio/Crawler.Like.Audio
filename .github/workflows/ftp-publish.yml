@@ -17,7 +17,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 24: npm test loads src/lib/*.ts directly through Node's type
+          # stripping (corpus contract, fetcher), which Node 20 lacks.
+          node-version: '24'
 
       # npm ci installs exactly what package-lock.json says; npm install could
       # resolve something newer on the runner than was tested.
@@ -34,6 +36,8 @@ jobs:
         run: npm test
         working-directory: ./Thin
 
+      # Includes the corpus contract (Contract/fixtures/v1) Thin's npm test
+      # also runs: both halves must write the same MAP.txt / EVERYTHING.LOG.
       - name: Test Thick
         run: python3 -m unittest discover -s tests
         working-directory: ./Thick

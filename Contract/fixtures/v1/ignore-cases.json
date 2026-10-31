@@ -1,0 +1,91 @@
+{
+  "_comment": "One root .gitignore, and what it ignores. Thick: crawler.utils_module.GitIgnoreMatcher.ignores(path, is_dir). Thin: the `ignore` package with a trailing '/' on folders (crawlerEngine.ts). Both must give these answers.",
+  "gitignore": "# comment\n\nbuild/\n*.log\n!keep.log\n/secret.txt\ndocs/*.md\n**/gen/**\n[ab].c\n",
+  "cases": [
+    {
+      "path": "build",
+      "isDir": true,
+      "ignored": true
+    },
+    {
+      "path": "build",
+      "isDir": false,
+      "ignored": false
+    },
+    {
+      "path": "build/x.o",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "src/build/x.o",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "run.log",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "deep/run.log",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "deep/keep.log",
+      "isDir": false,
+      "ignored": false
+    },
+    {
+      "path": "secret.txt",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "src/secret.txt",
+      "isDir": false,
+      "ignored": false
+    },
+    {
+      "path": "docs/a.md",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "src/docs/a.md",
+      "isDir": false,
+      "ignored": false
+    },
+    {
+      "path": "docs/sub/a.md",
+      "isDir": false,
+      "ignored": false
+    },
+    {
+      "path": "x/gen/y.ts",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "gen/y.ts",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "a.c",
+      "isDir": false,
+      "ignored": true
+    },
+    {
+      "path": "c.c",
+      "isDir": false,
+      "ignored": false
+    },
+    {
+      "path": "src/main.py",
+      "isDir": false,
+      "ignored": false
+    }
+  ]
+}

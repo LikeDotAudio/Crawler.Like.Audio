@@ -1,0 +1,44 @@
+{
+  "_comment": "The crawl corpus contract, version 1. Thin (Thin/src/lib/corpusFormat.ts) and Thick (Thick/crawler/corpus_format.py) each carry these values in code; Thin/test/corpus-contract.test.mjs and Thick/tests/test_corpus_contract.py fail when either drifts from this file or from fixtures/v1/. Change the format = bump version, add fixtures/v<N>/, and keep reading the old one. Prose: Documentation/🧩Manual and Artifacts/ARCHITECTURE.md, 'Corpus format'.",
+  "format": "crawler-corpus",
+  "version": 1,
+  "header": "# crawler-corpus: 1",
+  "headerPattern": "^# crawler-corpus: (\\d+)$",
+  "artifacts": {
+    "map": "MAP.txt",
+    "everything": "EVERYTHING.LOG"
+  },
+  "fileDelimiter": "# --- File: {path} ---",
+  "banner": "# ====================================================================================",
+  "sectionRule": "------------------------------------------------------------------------------------",
+  "skippedDirNames": ["node_modules", "venv", "__pycache__", "crawl"],
+  "skippedDirPatterns": ["^\\.", "^\\d{14}$"],
+  "textExtensions": [
+    ".bash", ".bat", ".c", ".cc", ".cjs", ".cmake", ".conf", ".cpp", ".cs", ".csproject", ".css", ".csv",
+    ".cxx", ".desktop", ".env", ".go", ".h", ".hpp", ".htm", ".html", ".ini", ".java", ".js", ".json",
+    ".jsonl", ".jsx", ".kt", ".kts", ".less", ".md", ".mdx", ".mjs", ".php", ".proto", ".ps1", ".py",
+    ".rb", ".rs", ".rst", ".sass", ".scss", ".sh", ".sln", ".sql", ".svg", ".swift", ".toml", ".ts",
+    ".tsv", ".tsx", ".txt", ".vue", ".xml", ".yaml", ".yml"
+  ],
+  "categories": {
+    "Programming": [".py", ".rs", ".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".ipp", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".sh", ".bash", ".bat", ".java", ".cs", ".rb", ".go", ".php", ".swift", ".kt", ".kts", ".ps1"],
+    "Web & Markup": [".html", ".htm", ".svg", ".css", ".scss", ".sass", ".less", ".vue"],
+    "Data & Config": [".json", ".jsonl", ".yaml", ".yml", ".toml", ".ini", ".conf", ".csv", ".tsv", ".proto", ".xml", ".env", ".sql", ".db", ".sqlite", ".sqlite3", ".mdb", ".accdb", ".dat"],
+    "Build & Infra": [".cmake", ".lock", ".in", ".nsi", ".desktop", ".sln", ".csproject"],
+    "Docs": [".md", ".mdx", ".txt", ".pdf", ".doc", ".docx", ".rst", ".rtf"],
+    "Media": [".png", ".jpg", ".jpeg", ".gif", ".ico", ".webp"],
+    "Compiler Caches": [".o", ".pyc", ".d", ".rmeta"],
+    "Runtime & Index": [".log", ".tag"],
+    "Backups": [".old", ".tmp", ".bak"],
+    "Libraries": [".rlib", ".a", ".so", ".lib", ".dll", ".dylib", ".whl"],
+    "Binaries": [".exe", ".bin", ".msi", ".dmg", ".pkg", ".iso", ".out", ".elf", ".apk"],
+    "Misc": [".zip", ".mib", ".expr", ".shw"]
+  },
+  "otherCategory": "Other",
+  "defaultSelectedCategories": ["Programming", "Web & Markup", "Data & Config", "Build & Infra", "Docs"],
+  "astMetrics": {
+    "languages": [".py"],
+    "maxBytes": 512000,
+    "structureTypes": ["class", "function"]
+  }
+}

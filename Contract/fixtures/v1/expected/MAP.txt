@@ -1,0 +1,16 @@
+# crawler-corpus: 1
+# Program Map: input
+# Created: 2026-10-30 00:00:00
+#
+input/
+├── src/
+│   ├── nested/
+│   │   └── util.ts
+│   ├── __init__.py  (classes: 0, functions: 0)
+│   ├── app.py  (classes: 2, functions: 4)
+│   └── data.json
+├── .gitignore
+├── Makefile
+├── README.md
+├── logo.png
+└── notes.txt

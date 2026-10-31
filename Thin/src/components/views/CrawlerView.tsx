@@ -7,19 +7,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { FolderSearch, Play, Square, FileText, Download, ShieldAlert, FolderTree, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FileTypeSelector } from './FileTypeSelector';
-import { astParser } from '@/lib/astParser';
-import ignore from 'ignore';
 import JSZip from 'jszip';
 import { runCrawler } from '@/lib/crawlerEngine';
 import { errorMessage } from "@/lib/utils";
 import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
-
-const CATEGORY_MAP: Record<string, string[]> = {
-  'PROGRAMMING': ['.js', '.jsx', '.ts', '.tsx', '.py', '.php', '.go', '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.rb', '.sh', '.bash'],
-  'WEB & MARKUP': ['.html', '.htm', '.css', '.scss', '.sass', '.less', '.xml', '.svg'],
-  'DATA & CONFIG': ['.json', '.yml', '.yaml', '.toml', '.ini', '.env', '.sql', '.csv', '.tsv'],
-  'DOCS': ['.md', '.txt', '.pdf', '.doc', '.docx', '.rst'],
-};
+import { CATEGORIES, OTHER_CATEGORY, DEFAULT_SELECTED_CATEGORIES, categoryOf, extOf, isSkippedDir } from '@/lib/corpusFormat';
 
 const preScanDirectory = async (dirHandle: FileSystemDirectoryHandle, updateCategories: (categories: FileCategory[]) => void, addLog: (msg: string) => void) => {
     addLog('[INFO] Starting fast pre-scan to discover file types...');
@@ -33,8 +25,7 @@ const preScanDirectory = async (dirHandle: FileSystemDirectoryHandle, updateCate
                     const file = await entry.getFile();
                     scannedFiles++;
                     const name = file.name;
-                    const extIndex = name.lastIndexOf('.');
-                    const ext = extIndex !== -1 ? name.substring(extIndex).toLowerCase() : 'unknown';
+                    const ext = extOf(name);
                     
                     if (!extStats[ext]) {
                         extStats[ext] = { count: 0, sizeBytes: 0 };
@@ -46,7 +37,7 @@ const preScanDirectory = async (dirHandle: FileSystemDirectoryHandle, updateCate
                         addLog(`[INFO] Pre-scanned ${scannedFiles} files...`);
                     }
                 } else if (isDirectoryHandle(entry)) {
-                    if (entry.name !== '.git' && entry.name !== 'node_modules') {
+                    if (!isSkippedDir(entry.name)) {
                         await scan(entry);
                     }
                 }
@@ -58,29 +49,19 @@ const preScanDirectory = async (dirHandle: FileSystemDirectoryHandle, updateCate
 
     await scan(dirHandle);
 
-    const categoriesMap: Record<string, FileCategory> = {
-        'PROGRAMMING': { name: 'PROGRAMMING', extensions: [] },
-        'WEB & MARKUP': { name: 'WEB & MARKUP', extensions: [] },
-        'DATA & CONFIG': { name: 'DATA & CONFIG', extensions: [] },
-        'DOCS': { name: 'DOCS', extensions: [] },
-        'OTHER': { name: 'OTHER', extensions: [] },
-    };
-
-    const getCategoryForExt = (ext: string) => {
-        for (const [cat, exts] of Object.entries(CATEGORY_MAP)) {
-            if (exts.includes(ext)) return cat;
-        }
-        return 'OTHER';
-    };
+    // One category table for both halves: corpusFormat.CATEGORIES (Contract/corpus.v1.json).
+    const categoriesMap: Record<string, FileCategory> = Object.fromEntries(
+        [...Object.keys(CATEGORIES), OTHER_CATEGORY].map(name => [name, { name, extensions: [] as FileCategory['extensions'] }])
+    );
 
     for (const [ext, stats] of Object.entries(extStats)) {
-        if (ext === 'unknown') continue;
-        const catName = getCategoryForExt(ext);
+        if (!ext) continue;
+        const catName = categoryOf(ext);
         categoriesMap[catName].extensions.push({
             ext,
             count: stats.count,
             sizeMB: stats.sizeBytes / (1024 * 1024),
-            selected: true,
+            selected: DEFAULT_SELECTED_CATEGORIES.includes(catName),
             emoji: extensionEmojiMap[ext] || '📄'
         });
     }
@@ -138,10 +119,9 @@ export function CrawlerView() {
         
         useAppStore.getState().setGraphData({ nodes: result.graphNodes, edges: result.graphEdges });
         
-        const finalScrapeText = result.mapText + "\n\n" + "-".repeat(84) + "\n\n" + result.scrapeText;
-        
+        // EVERYTHING.LOG already opens with the map (crawler-corpus v1).
         useAppStore.getState().setMapText(result.mapText);
-        useAppStore.getState().setScrapeText(finalScrapeText);
+        useAppStore.getState().setScrapeText(result.scrapeText);
         useAppStore.getState().setExtractorText(result.extractorText);
       }
     } catch (e) {

@@ -1,16 +1,10 @@
-# main.py
+# Part of the APK.audio project — http://APK.audio — made by Anthony Kuzub
+# MIT Licence. Free, for everyone, for ever. Full text in LICENSE at the root.
+"""Kept so `python3 main.py` still works; the app is the `crawler` package
+(`python3 -m crawler` from Thick/). Python puts this file's folder on sys.path
+itself, so nothing is appended to it."""
 
-import os
-import sys
-import tkinter as tk
-
-# Ensure src is in path if needed (though standard import should work if run from root)
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-
-from src.gui_module import FolderCrawlerApp
+from crawler.__main__ import main
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    start_directory = os.path.dirname(os.path.abspath(__file__))
-    app = FolderCrawlerApp(root, start_directory)
-    root.mainloop()
+    main()

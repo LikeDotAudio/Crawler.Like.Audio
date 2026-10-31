@@ -1,0 +1,143 @@
+{
+  "_comment": "extOf/ext_of, isSkippedDir/is_skipped_dir, categoryOf/category_of and isTextFile/is_text_file answers both halves must give.",
+  "ext": [
+    {
+      "name": ".gitignore",
+      "ext": ""
+    },
+    {
+      "name": "Makefile",
+      "ext": ""
+    },
+    {
+      "name": "a.TS",
+      "ext": ".ts"
+    },
+    {
+      "name": "archive.tar.gz",
+      "ext": ".gz"
+    },
+    {
+      "name": "..hidden",
+      "ext": ""
+    },
+    {
+      "name": ".env.local",
+      "ext": ".local"
+    },
+    {
+      "name": "README.md",
+      "ext": ".md"
+    }
+  ],
+  "skippedDir": [
+    {
+      "name": ".git",
+      "skipped": true
+    },
+    {
+      "name": ".crawler",
+      "skipped": true
+    },
+    {
+      "name": ".next",
+      "skipped": true
+    },
+    {
+      "name": "node_modules",
+      "skipped": true
+    },
+    {
+      "name": "Node_Modules",
+      "skipped": true
+    },
+    {
+      "name": "venv",
+      "skipped": true
+    },
+    {
+      "name": "__pycache__",
+      "skipped": true
+    },
+    {
+      "name": "Crawl",
+      "skipped": true
+    },
+    {
+      "name": "20260117232346",
+      "skipped": true
+    },
+    {
+      "name": "2026011723234",
+      "skipped": false
+    },
+    {
+      "name": "src",
+      "skipped": false
+    },
+    {
+      "name": "crawler",
+      "skipped": false
+    }
+  ],
+  "category": [
+    {
+      "ext": ".py",
+      "category": "Programming"
+    },
+    {
+      "ext": ".ts",
+      "category": "Programming"
+    },
+    {
+      "ext": ".json",
+      "category": "Data & Config"
+    },
+    {
+      "ext": ".md",
+      "category": "Docs"
+    },
+    {
+      "ext": ".png",
+      "category": "Media"
+    },
+    {
+      "ext": ".lock",
+      "category": "Build & Infra"
+    },
+    {
+      "ext": ".xyz",
+      "category": "Other"
+    },
+    {
+      "ext": "",
+      "category": "Other"
+    }
+  ],
+  "text": [
+    {
+      "name": "a.py",
+      "text": true
+    },
+    {
+      "name": "a.TSX",
+      "text": true
+    },
+    {
+      "name": "logo.png",
+      "text": false
+    },
+    {
+      "name": "Makefile",
+      "text": false
+    },
+    {
+      "name": ".gitignore",
+      "text": false
+    },
+    {
+      "name": "notes.txt",
+      "text": true
+    }
+  ]
+}

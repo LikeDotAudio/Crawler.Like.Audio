@@ -11,6 +11,12 @@ DESKTOP_FILE_DEST = os.path.expanduser("~/.local/share/applications/Crawler.desk
 ICON_PATH = os.path.join(PROJECT_DIR, "crawler_icon.svg")
 EXEC_PATH = os.path.join(PROJECT_DIR, "run_crawler.sh")
 REQUIREMENTS = os.path.join(PROJECT_DIR, "requirements.txt")
+# CAPTURE.WebScraper -- the polite crawler the Web Crawler tab drives -- as a
+# package: the monorepo checkout when this repo sits inside APK.audio
+# (Thick -> Crawler.Like.Audio -> SCANALYZER.Like.audio -> SCANALYZER_SUITE ->
+# Softapps), else its own repository. Without it only that tab is inert.
+WEBSCRAPER_CHECKOUT = os.path.normpath(os.path.join(PROJECT_DIR, "..", "..", "..", "..", "CAPTURE", "CAPTURE.WebScraper"))
+WEBSCRAPER_REMOTE = "git+https://github.com/LikeDotAudio/APK.softapp.CAPTURE.WebScraper.git"
 
 def install_dependencies():
     """Installs dependencies for the system Python (no virtual environment)."""
@@ -26,6 +32,17 @@ def install_dependencies():
         # --user still installs into ~/.local only, leaving distro packages alone.
         print("Retrying with --break-system-packages (PEP 668 externally-managed environment)...")
         subprocess.check_call(base_cmd + ["--break-system-packages"])
+
+    source = WEBSCRAPER_CHECKOUT if os.path.isfile(os.path.join(WEBSCRAPER_CHECKOUT, "pyproject.toml")) else WEBSCRAPER_REMOTE
+    print(f"Installing CAPTURE.WebScraper from {source}...")
+    scraper_cmd = [python, "-m", "pip", "install", "--user", source]
+    try:
+        subprocess.check_call(scraper_cmd)
+    except subprocess.CalledProcessError:
+        try:
+            subprocess.check_call(scraper_cmd + ["--break-system-packages"])
+        except subprocess.CalledProcessError:
+            print("CAPTURE.WebScraper did not install; the Web Crawler tab will say so and stay inert.")
 
 def update_desktop_file():
     """Updates the paths in the Crawler.desktop file to match the current directory."""

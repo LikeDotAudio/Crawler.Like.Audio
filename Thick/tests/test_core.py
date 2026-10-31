@@ -11,11 +11,11 @@ import tempfile
 import unittest
 from unittest import mock
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from utils_module import GitIgnoreMatcher  # noqa: E402
-import config_manager  # noqa: E402
-from config_manager import ConfigManager  # noqa: E402
+from crawler.utils_module import GitIgnoreMatcher  # noqa: E402
+from crawler import config_manager  # noqa: E402
+from crawler.config_manager import ConfigManager  # noqa: E402
 
 
 def matcher(root, lines):
@@ -40,7 +40,8 @@ class GitIgnore(unittest.TestCase):
 
     def test_directory_pattern_skips_the_dir_and_everything_under_it(self):
         m = matcher(self.root, ['node_modules/'])
-        self.assertTrue(m.is_ignored(self.p('node_modules')))
+        self.assertTrue(m.is_ignored(self.p('node_modules'), is_dir=True))
+        self.assertFalse(m.is_ignored(self.p('node_modules'), is_dir=False))
         self.assertTrue(m.is_ignored(self.p('web/node_modules/react/index.js')))
         self.assertFalse(m.is_ignored(self.p('src/modules.py')))
 

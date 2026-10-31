@@ -1,5 +1,6 @@
-import type { Parser, Language, Node } from 'web-tree-sitter';
+import type { Parser, Language } from 'web-tree-sitter';
 import { BASE_PATH } from './basePath';
+import { metricsFromTree, type AstMetrics } from './corpusFormat';
 
 // layout.tsx loads public/web-tree-sitter.js and sets window.TreeSitter = Parser
 // with Parser.Language = Language. Type-only import: the bundle is never imported.
@@ -31,6 +32,10 @@ class AstParserService {
         
         this.parser = new TreeSitter();
         
+        // public/tree-sitter-python.wasm is tree-sitter-python 0.25.0's own build
+        // (npm tarball, MIT). The tree-sitter-wasms 0.1.13 copy it replaced has the
+        // old 'dylink' section this web-tree-sitter (0.26) refuses, so the AST
+        // pass never ran; test/corpus-contract.test.mjs now loads it.
         const pythonLanguage = await TreeSitter.Language.load(`${BASE_PATH}/tree-sitter-python.wasm`);
         this.parser.setLanguage(pythonLanguage);
         
@@ -53,31 +58,9 @@ class AstParserService {
     return tree;
   }
 
-  extractMetrics(code: string) {
-    const tree = this.parse(code);
-    let classCount = 0;
-    let functionCount = 0;
-    const structures: { type: 'class' | 'function'; name: string }[] = [];
-
-    // Traverse the syntax tree for specific nodes
-    const walk = (node: Node) => {
-      if (node.type === 'class_definition') {
-        classCount++;
-        const nameNode = node.childForFieldName('name');
-        if (nameNode) structures.push({ type: 'class', name: nameNode.text });
-      } else if (node.type === 'function_definition') {
-        functionCount++;
-        const nameNode = node.childForFieldName('name');
-        if (nameNode) structures.push({ type: 'function', name: nameNode.text });
-      }
-      for (let i = 0; i < node.childCount; i++) {
-        const child = node.child(i);
-        if (child) walk(child);
-      }
-    };
-    
-    walk(tree.rootNode);
-    return { classCount, functionCount, structures };
+  /** crawler-corpus v1 AST metrics (corpusFormat.metricsFromTree). */
+  extractMetrics(code: string): AstMetrics {
+    return metricsFromTree(this.parse(code).rootNode);
   }
 }
 

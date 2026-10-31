@@ -1,0 +1,64 @@
+{
+  "_comment": "What parse_everything / parseEverything returns for each corpus here (paths relative to fixtures/v1/). 'refused': the version the reader must reject.",
+  "expect": {
+    "legacy-v0-thin.LOG": {
+      "version": 0,
+      "files": [
+        {
+          "path": "src/a.py",
+          "content": "print('a')\n"
+        }
+      ],
+      "skipped": [
+        "../escape.txt"
+      ]
+    },
+    "legacy-v0-thick.LOG": {
+      "version": 0,
+      "files": [
+        {
+          "path": "proj/src/a.py",
+          "content": "print('a')\n"
+        },
+        {
+          "path": "proj/README.md",
+          "content": "# Proj\n"
+        }
+      ],
+      "skipped": []
+    },
+    "future-v2.LOG": {
+      "refused": 2
+    },
+    "expected/EVERYTHING.LOG": {
+      "version": 1,
+      "files": [
+        {
+          "path": "src/nested/util.ts",
+          "content": "export const x = 1;\n"
+        },
+        {
+          "path": "src/__init__.py",
+          "content": ""
+        },
+        {
+          "path": "src/app.py",
+          "content": "import os\n\n\ndef top(a, b=1):\n    def inner():\n        return a\n    return inner()\n\n\nclass Engine:\n    \"\"\"An engine.\"\"\"\n\n    def start(self):\n        return os.getcwd()\n\n    @staticmethod\n    async def run():\n        return None\n\n\nclass Empty:\n    pass\n"
+        },
+        {
+          "path": "src/data.json",
+          "content": "{\n  \"a\": 1\n}\n"
+        },
+        {
+          "path": "README.md",
+          "content": "# Fixture\n\nA corpus fixture.\n"
+        },
+        {
+          "path": "notes.txt",
+          "content": "no trailing newline\n"
+        }
+      ],
+      "skipped": []
+    }
+  }
+}

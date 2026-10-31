@@ -1,0 +1,32 @@
+{
+  "src/app.py": {
+    "classCount": 2,
+    "functionCount": 4,
+    "structures": [
+      {
+        "type": "function",
+        "name": "top"
+      },
+      {
+        "type": "function",
+        "name": "inner"
+      },
+      {
+        "type": "class",
+        "name": "Engine"
+      },
+      {
+        "type": "function",
+        "name": "start"
+      },
+      {
+        "type": "function",
+        "name": "run"
+      },
+      {
+        "type": "class",
+        "name": "Empty"
+      }
+    ]
+  }
+}

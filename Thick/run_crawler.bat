@@ -3,9 +3,9 @@
 cd /d "%~dp0"
 
 :: Run with the system Python (no virtual environment)
-python main.py
+python -m crawler
 if %errorlevel% neq 0 (
-    python3 main.py
+    python3 -m crawler
 )
 
 :: Keep the window open if there is an error

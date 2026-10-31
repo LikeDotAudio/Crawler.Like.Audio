@@ -1,0 +1,65 @@
+# crawler-corpus: 1
+# Program Map: input
+# Created: 2026-10-30 00:00:00
+#
+input/
+├── src/
+│   ├── nested/
+│   │   └── util.ts
+│   ├── __init__.py  (classes: 0, functions: 0)
+│   ├── app.py  (classes: 2, functions: 4)
+│   └── data.json
+├── .gitignore
+├── Makefile
+├── README.md
+├── logo.png
+└── notes.txt
+
+------------------------------------------------------------------------------------
+
+# ====================================================================================
+# EVERYTHING.LOG
+# Log started at: 2026-10-30 00:00:00
+# ====================================================================================
+
+# --- File: src/nested/util.ts ---
+export const x = 1;
+
+# --- File: src/__init__.py ---
+
+# --- File: src/app.py ---
+import os
+
+
+def top(a, b=1):
+    def inner():
+        return a
+    return inner()
+
+
+class Engine:
+    """An engine."""
+
+    def start(self):
+        return os.getcwd()
+
+    @staticmethod
+    async def run():
+        return None
+
+
+class Empty:
+    pass
+
+# --- File: src/data.json ---
+{
+  "a": 1
+}
+
+# --- File: README.md ---
+# Fixture
+
+A corpus fixture.
+
+# --- File: notes.txt ---
+no trailing newline
