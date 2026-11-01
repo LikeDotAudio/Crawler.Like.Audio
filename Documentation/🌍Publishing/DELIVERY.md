@@ -48,3 +48,6 @@ A push to `main` is a release of crawler.like.audio.
 - **WS-03 display.json declares a topic nothing publishes** — `"topic": "APK.audio/Gui/Softapps/Crawler"` dropped from `display.json` (no MQTT in either half); ARCHITECTURE.md updated. This is the OS softapp tile's manifest.
 - **Launcher entry points at the untracked `Thin/out/index.html`** — Kept by design: the house convention for softapps built by root CI (`ci.yml` *Build the Crawler* with `CRAWLER_BASE_PATH`, before WEB.Frontend-Assets copies the Softapps tree); committing `out/` would duplicate every chunk in git. Reason written in ARCHITECTURE.md *Using it*.
 - **Tested** — `cd Thin && npm test` (12 pass), `npx tsc --noEmit` (clean), `npm run lint` (0 errors); `cd Thick && python3 -m unittest discover -s tests` (18 pass). CI (`ftp-publish.yml`) moved to Node 24 so `npm test` can load the TypeScript modules.
+
+## Releases
+- **Released `2.0.0`, tag `v2.0.0`** (2026-11-01, ROAD-3452, the owner's V2) — no SDK pin; every manifest says 2.0.0; GitHub release `v2.0.0`.
