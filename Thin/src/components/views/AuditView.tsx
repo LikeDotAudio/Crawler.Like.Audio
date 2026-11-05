@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, PackageSearch, Ghost, SearchCode, Ruler, FolderSearch, Play, Download } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { runAuditEngine } from '@/lib/auditEngine';
+import { problem } from '@/lib/apkSoftapp';
 
 export function AuditView() {
   const { dirHandle, setDirHandle, selectedFolder, setSelectedFolder } = useAppStore();
@@ -25,9 +26,12 @@ export function AuditView() {
         setSelectedFolder(handle.name);
         setAuditLogs([]);
         addLog(`[INFO] Ready to audit directory: ${handle.name}`);
+      } else {
+        problem('unsupported_browser', { subject: 'Folder picker', fix: ['Open Crawler in Chrome or Edge on a desktop — they offer the folder picker (File System Access).'] });
       }
     } catch (err) {
       console.error(err);
+      problem(err, { subject: 'Project folder', onRetry: () => void handleBrowse() });
     }
   };
 

@@ -12,6 +12,7 @@ import { runCrawler } from '@/lib/crawlerEngine';
 import { errorMessage } from "@/lib/utils";
 import { isFileHandle, isDirectoryHandle } from '@/lib/fsAccess';
 import { CATEGORIES, OTHER_CATEGORY, DEFAULT_SELECTED_CATEGORIES, categoryOf, extOf, isSkippedDir } from '@/lib/corpusFormat';
+import { problem, isCancel } from '@/lib/apkSoftapp';
 
 const preScanDirectory = async (dirHandle: FileSystemDirectoryHandle, updateCategories: (categories: FileCategory[]) => void, addLog: (msg: string) => void) => {
     addLog('[INFO] Starting fast pre-scan to discover file types...');
@@ -127,6 +128,7 @@ export function CrawlerView() {
     } catch (e) {
       console.error(e);
       addCrawlLog(`[ERROR] Crawl failed: ${errorMessage(e)}`);
+      problem(e, { subject: 'Crawl', detail: errorMessage(e), fix: ['Browse to the folder again (the browser may have dropped its permission), then Start.'] });
     } finally {
       setIsCrawling(false);
     }
@@ -158,10 +160,15 @@ export function CrawlerView() {
         
       } else {
         addCrawlLog('[ERROR] Your browser does not support the File System Access API. Please use Chrome or Edge.');
+        problem('unsupported_browser', { subject: 'Folder picker', fix: ['Open Crawler in Chrome or Edge on a desktop — they offer the folder picker (File System Access).'] });
       }
     } catch (err) {
       console.error(err);
-      addCrawlLog('[WARN] Directory selection cancelled.');
+      if (isCancel(err)) addCrawlLog('[WARN] Directory selection cancelled.');
+      else {
+        addCrawlLog(`[ERROR] Could not open that folder: ${errorMessage(err)}`);
+        problem(err, { subject: 'Folder', onRetry: () => void handleBrowse() });
+      }
     }
   };
 
@@ -197,6 +204,8 @@ export function CrawlerView() {
     } catch (e) {
       console.error(e);
       addCrawlLog('[ERROR] Failed to generate ZIP file.');
+      problem('save_failed', { subject: 'Crawler_Output .zip', detail: errorMessage(e),
+        fix: ['Download MAP.txt and EVERYTHING.LOG one at a time instead.'], onRetry: () => void downloadZip() });
     }
   };
 

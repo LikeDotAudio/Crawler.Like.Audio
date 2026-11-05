@@ -6,6 +6,7 @@ import { FileType, Upload, Download, FileText } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { BASE_PATH } from '@/lib/basePath';
+import { problem } from '@/lib/apkSoftapp';
 
 export function PdfToMdView() {
   const [output, setOutput] = useState('');
@@ -29,7 +30,7 @@ export function PdfToMdView() {
 
   const processFile = async (file: File) => {
     if (file.type !== 'application/pdf') {
-      alert('Please upload a valid PDF file.');
+      problem('bad_input', { subject: file.name, detail: 'That is not a PDF file.', fix: ['Drop a .pdf file (application/pdf).'] });
       return;
     }
 
@@ -54,6 +55,8 @@ export function PdfToMdView() {
     } catch (err) {
       console.error(err);
       setOutput('Failed to extract text from PDF. The file might be corrupted or protected.');
+      problem('file_unreadable', { subject: file.name, detail: err instanceof Error ? err.message : String(err),
+        fix: ['The PDF may be corrupted or password-protected: open it in a viewer, print it to a new PDF, and drop that one.'] });
     } finally {
       setIsLoading(false);
     }

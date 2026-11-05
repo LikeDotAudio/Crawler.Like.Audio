@@ -5,6 +5,7 @@ import { FolderTree, Maximize, Settings2, FolderSearch, RefreshCw } from "lucide
 import { motion } from "framer-motion";
 import * as d3 from "d3-hierarchy";
 import { TreeNode, scanDirectory, computeTreemapLayout, formatBytes, getSizeColor } from "../../lib/scopeMapEngine";
+import { problem } from '@/lib/apkSoftapp';
 
 const EXT_COLORS: Record<string, string> = {
   ".js": "#f7df1e",
@@ -56,6 +57,7 @@ export function ScopeMapView() {
       setTreeData(result.root);
     } catch (err) {
       console.error(err);
+      problem(err, { subject: 'SCOPE Map folder', fix: ['Open Crawler in Chrome or Edge on a desktop — they offer the folder picker (File System Access).'], onRetry: () => void handleSelectFolder() });
     } finally {
       setIsScanning(false);
     }

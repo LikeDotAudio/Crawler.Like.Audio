@@ -19,9 +19,12 @@ import { JsonPrettyPrintView } from '@/components/views/JsonPrettyPrintView';
 import { AudioConverterView } from '@/components/views/AudioConverterView';
 import { SpreadsheetConverterView } from '@/components/views/SpreadsheetConverterView';
 import { useAppStore } from '@/store/useAppStore';
+import { useEffect } from 'react';
+import { describeCrawler } from '@/lib/apkSoftapp';
 
 export default function Home() {
   const { activeTab } = useAppStore();
+  useEffect(() => { describeCrawler(); }, []);
 
   return (
     <div className="flex h-screen w-full bg-transparent overflow-hidden selection:bg-primary/30">
