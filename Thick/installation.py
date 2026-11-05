@@ -78,7 +78,20 @@ def install_desktop_shortcut():
     
     print("Installation complete. You should now find 'Crawler' in your applications menu and can pin it to your taskbar.")
 
-if __name__ == "__main__":
-    install_dependencies()
+def main():
+    try:
+        install_dependencies()
+    except subprocess.CalledProcessError as error:
+        # pip already printed why; say which step and the way back.
+        from crawler.cli_problems import fail
+        fail("script_error", detail=f"`{' '.join(map(str, error.cmd))}` exited {error.returncode}",
+             fix=["Read pip's message just above (no network, or a package that would not build, is the usual cause), "
+                  "then run installation.py again."])
     update_desktop_file()
     install_desktop_shortcut()
+
+
+if __name__ == "__main__":
+    # A common mistake prints crawler/cli_problems' (apkaudio_contracts.problems) plain text, not a traceback.
+    from crawler.cli_problems import guarded
+    sys.exit(guarded(main))

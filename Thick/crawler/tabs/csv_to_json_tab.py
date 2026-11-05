@@ -52,7 +52,7 @@ class CsvToJsonTab(ttk.Frame):
 
         self.headers_canvas.configure(yscrollcommand=self.headers_scrollbar.set)
         self.headers_frame = tk.Frame(self.headers_canvas, bg=COLOR_BG_APP)
-        self.headers_canvas.window(
+        self.headers_canvas.create_window(
             (0, 0), window=self.headers_frame, anchor="nw"
         )
 
