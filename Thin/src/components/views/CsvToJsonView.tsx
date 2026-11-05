@@ -4,9 +4,13 @@ import React, { useState, useMemo } from "react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { Upload, FileJson, Settings2, Download, Table, FileCode2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Role, HeaderConfig, generateOutputs, type CsvRow, type GenerationResult } from "../../lib/csvToJsonEngine";
 import { errorMessage } from "@/lib/utils";
+import { ApkTable, h, selectNode, inputNode } from "../common/ApkTable";
+
+const ROLES = ["Simple Value", "Hierarchical Key", "Sub Key", "Value as Key", "Key Name and Value", "Skip"];
+const FIELD = "w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors";
 
 export function CsvToJsonView() {
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
@@ -252,93 +256,27 @@ export function CsvToJsonView() {
                   Column Configurations
                 </h3>
                 
-                <div className="overflow-x-auto rounded-xl border border-slate-800">
-                  <table className="w-full text-left text-sm text-slate-300 min-w-[800px]">
-                    <thead className="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Column</th>
-                        <th className="px-4 py-3 font-semibold w-1/4">JSON Key Name</th>
-                        <th className="px-4 py-3 font-semibold w-1/5">Role</th>
-                        <th className="px-4 py-3 font-semibold w-1/5">Nested Under</th>
-                        <th className="px-4 py-3 font-semibold w-1/5">Part Name</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      <AnimatePresence>
-                        {headers.map((header) => {
-                          const config = configs[header];
-                          if (!config) return null;
-                          const needsPartName = ["Hierarchical Key", "Key Name and Value"].includes(config.role);
-
-                          return (
-                            <motion.tr 
-                              key={header}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="hover:bg-slate-800/30 transition-colors"
-                            >
-                              <td className="px-4 py-3 align-middle">
-                                <span className="bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md text-xs font-bold font-mono tracking-wider inline-block">
-                                  {header}
-                                </span>
-                              </td>
-                              
-                              <td className="px-4 py-2 align-middle">
-                                <input
-                                  type="text"
-                                  value={config.jsonKey}
-                                  onChange={(e) => updateConfig(header, { jsonKey: e.target.value })}
-                                  className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                                />
-                              </td>
-
-                              <td className="px-4 py-2 align-middle">
-                                <select
-                                  value={config.role}
-                                  onChange={(e) => updateConfig(header, { role: e.target.value as Role })}
-                                  className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                                >
-                                  <option>Simple Value</option>
-                                  <option>Hierarchical Key</option>
-                                  <option>Sub Key</option>
-                                  <option>Value as Key</option>
-                                  <option>Key Name and Value</option>
-                                  <option>Skip</option>
-                                </select>
-                              </td>
-                              
-                              <td className="px-4 py-2 align-middle">
-                                {config.role !== "Skip" && (
-                                  <select
-                                    value={config.nestedUnder}
-                                    onChange={(e) => updateConfig(header, { nestedUnder: e.target.value })}
-                                    className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                                  >
-                                    {parentOptions.map((p) => (
-                                      <option key={p} value={p}>{p}</option>
-                                    ))}
-                                  </select>
-                                )}
-                              </td>
-
-                              <td className="px-4 py-2 align-middle">
-                                {needsPartName && (
-                                  <input
-                                    type="text"
-                                    value={config.partName}
-                                    onChange={(e) => updateConfig(header, { partName: e.target.value })}
-                                    className="w-full bg-slate-950 border border-slate-800/80 text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors"
-                                    placeholder="e.g. parts"
-                                  />
-                                )}
-                              </td>
-                            </motion.tr>
-                          );
-                        })}
-                      </AnimatePresence>
-                    </tbody>
-                  </table>
-                </div>
+                {/* THE ONE TABLE (ROAD-3494): APKTable 'crawler-csv-columns'. */}
+                <ApkTable
+                  id="crawler-csv-columns"
+                  className="crawler-table rounded-xl border border-slate-800 text-sm text-slate-300"
+                  sortable={false}
+                  rows={headers.filter((header) => configs[header])}
+                  columns={[
+                    { key: 'column', label: 'Column', value: (header) => header,
+                      node: (header) => h('span', undefined, header, 'bg-indigo-500/10 text-indigo-300 px-2.5 py-1 rounded-md text-xs font-bold font-mono tracking-wider inline-block') },
+                    { key: 'jsonKey', label: 'JSON Key Name', width: '25%', value: (header) => configs[header].jsonKey,
+                      node: (header) => inputNode(configs[header].jsonKey, (v) => updateConfig(header, { jsonKey: v }), FIELD) },
+                    { key: 'role', label: 'Role', width: '20%', value: (header) => configs[header].role,
+                      node: (header) => selectNode(ROLES, configs[header].role, (v) => updateConfig(header, { role: v as Role }), FIELD) },
+                    { key: 'nestedUnder', label: 'Nested Under', width: '20%', value: (header) => configs[header].nestedUnder,
+                      node: (header) => (configs[header].role === "Skip" ? h('span')
+                        : selectNode(parentOptions, configs[header].nestedUnder, (v) => updateConfig(header, { nestedUnder: v }), FIELD)) },
+                    { key: 'partName', label: 'Part Name', width: '20%', value: (header) => configs[header].partName,
+                      node: (header) => (["Hierarchical Key", "Key Name and Value"].includes(configs[header].role)
+                        ? inputNode(configs[header].partName, (v) => updateConfig(header, { partName: v }), FIELD, 'e.g. parts') : h('span')) },
+                  ]}
+                />
               </div>
             </motion.div>
 

@@ -6,6 +6,7 @@ import { generateConversions, type ConversionOutputs } from "@/lib/jsonToCsvEngi
 import { Upload, FileCode2, Download, TableProperties, CodeXml, LayoutList, Table, FileJson } from "lucide-react";
 import { motion } from "framer-motion";
 import { errorMessage } from "@/lib/utils";
+import { ApkTable } from "../common/ApkTable";
 
 const NO_OUTPUTS: ConversionOutputs = { processedData: [], csvOutput: "", yamlOutput: "", xmlOutput: "", jsonOutput: "" };
 
@@ -220,24 +221,16 @@ export function JsonToCsvView() {
                   {jsonData ? (
                     viewMode === 'table' && (activeTab === 'csv' || activeTab === 'excel') ? (
                       processedData.length > 0 ? (
-                        <table className="w-full text-left text-xs text-slate-300">
-                          <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
-                            <tr>
-                              {Object.keys(processedData[0]).map((h) => (
-                                <th key={h} className="px-3 py-2 font-semibold whitespace-nowrap">{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800/50">
-                            {processedData.slice(0, 100).map((row, i) => (
-                              <tr key={i} className="hover:bg-slate-800/30 transition-colors">
-                                {Object.keys(processedData[0]).map((h) => (
-                                  <td key={h} className="px-3 py-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-xs">{row[h] !== null && row[h] !== undefined ? String(row[h]) : ""}</td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        // THE ONE TABLE (ROAD-3494): APKTable 'crawler-json-preview', the first 100 rows.
+                        <ApkTable
+                          id="crawler-json-preview"
+                          className="crawler-table text-xs text-slate-300"
+                          rows={processedData.slice(0, 100)}
+                          columns={Object.keys(processedData[0]).map((k) => ({
+                            key: k, label: k,
+                            value: (row: Record<string, unknown>) => (row[k] !== null && row[k] !== undefined ? String(row[k]) : ""),
+                          }))}
+                        />
                       ) : (
                         <p className="text-slate-500 text-center py-10">No data</p>
                       )
