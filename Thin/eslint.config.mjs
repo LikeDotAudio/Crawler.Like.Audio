@@ -17,6 +17,16 @@ const eslintConfig = defineConfig([
     // pdf.js worker copied from node_modules (npm run sync:pdf-worker).
     "public/pdf.worker.min.js",
   ]),
+  // CommonJS test shims (test/*.cjs) load the shared APKTable into a vm sandbox:
+  // require() is how a .cjs file imports, and the shim's prototype glue keeps
+  // `this` on purpose. TypeScript-style rules do not apply to them.
+  {
+    files: ["test/**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-this-alias": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
