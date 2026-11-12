@@ -49,5 +49,14 @@ A push to `main` is a release of crawler.like.audio.
 - **Launcher entry points at the untracked `Thin/out/index.html`** — Kept by design: the house convention for softapps built by root CI (`ci.yml` *Build the Crawler* with `CRAWLER_BASE_PATH`, before WEB.Frontend-Assets copies the Softapps tree); committing `out/` would duplicate every chunk in git. Reason written in ARCHITECTURE.md *Using it*.
 - **Tested** — `cd Thin && npm test` (12 pass), `npx tsc --noEmit` (clean), `npm run lint` (0 errors); `cd Thick && python3 -m unittest discover -s tests` (18 pass). CI (`ftp-publish.yml`) moved to Node 24 so `npm test` can load the TypeScript modules.
 
+## Delivered 2026-11-11 – 2026-11-12
+
+From this repository's own commits (the commit message is the record):
+
+- vendor: apk-contracts web bundle refreshed from contracts/generated/web (report.ts: LogLine + ProblemRecord, System/Problems family) (`bb08333`)
+- vendor/apk-softapp: re-vendored — every problem card is reported through the SDK (ROAD-3695 step 2) (`65e58aa`)
+- vendor: apk-contracts web bundle refreshed from contracts/generated/web (five report codes, ROAD-3695; unit-gate, ROAD-3684) (`cae2216`)
+- re-vendor apk-contracts web bundle: contracts 2.4.0 retires APK.audio/Tests/{suite} (ROAD-3729) (`25d6306`)
+
 ## Releases
 - **Released `2.0.0`, tag `v2.0.0`** (2026-11-01, ROAD-3452, the owner's V2) — no SDK pin; every manifest says 2.0.0; GitHub release `v2.0.0`.
