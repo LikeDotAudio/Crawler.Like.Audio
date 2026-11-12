@@ -156,5 +156,5 @@ npm run dev
 Since the goal is a 100% backend-free suite, any new auditing functions (like SNMP walks or mDNS browsers) must be designed either as native browser hacks (like the LAN timing attack sweeper) or via an optional lightweight Local Relay WebSocket script for advanced networking.
 
 <!-- wiki:smoke -->
-**Smoke test** — ❌ FAIL 0/1 since 2026-11-12 00:16 EST — [results](Documentation/%F0%9F%A7%A9Manual%20and%20Artifacts/SMOKE.md)
+**Smoke test** — ✅ PASS 1/1 since 2026-11-12 00:40 EST — [results](Documentation/%F0%9F%A7%A9Manual%20and%20Artifacts/SMOKE.md)
 <!-- /wiki:smoke -->
