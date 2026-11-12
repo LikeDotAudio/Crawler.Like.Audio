@@ -4,7 +4,9 @@
 
 Reads crawler-corpus version 1 and the unversioned files both halves wrote
 before it (Thin's "# --- File: /x", Thick's 37-hash banner); refuses a newer
-version instead of guessing, and never writes outside the destination."""
+version instead of guessing, and never writes outside the destination.
+A link line (corpus_format.parse_links: a duplicate the crawl saved once)
+is written again under its own name from the file it names."""
 
 import inspect
 import os
@@ -29,7 +31,10 @@ class ProjectRegenerator:
         for path in parsed["skipped"]:
             self._log(f"⚠️ Skipped unsafe path: {path}")
         written = 0
-        for f in parsed["files"]:
+        contents = {f["path"]: f["content"] for f in parsed["files"]}
+        links = [{"path": link["path"], "content": contents[link["sameAs"]]}
+                 for link in corpus_format.parse_links(text) if link["sameAs"] in contents]
+        for f in parsed["files"] + links:
             new_file_path = os.path.join(destination_dir, *f["path"].split("/"))
             self._log(f"Processing: {new_file_path}", "file")
             try:

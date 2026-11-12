@@ -46,6 +46,7 @@ class Contract(unittest.TestCase):
         self.assertEqual(cf.CORPUS_HEADER, self.c['header'])
         self.assertEqual(cf.BANNER, self.c['banner'])
         self.assertEqual(cf.SECTION_RULE, self.c['sectionRule'])
+        self.assertEqual(cf.LINK_PREFIX + '{json}' + cf.LINK_SUFFIX, self.c['linkLine'])
 
     def test_rules(self):
         self.assertEqual(cf.SKIPPED_DIR_NAMES, self.c['skippedDirNames'])

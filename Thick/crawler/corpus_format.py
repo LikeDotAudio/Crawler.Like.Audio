@@ -13,6 +13,7 @@ No tkinter here: the tests import it on a machine without a display.
 """
 
 import ast
+import json
 import re
 
 CORPUS_FORMAT = "crawler-corpus"
@@ -22,6 +23,14 @@ _HEADER_PATTERN = re.compile(r"^# crawler-corpus: (\d+)$")
 BANNER = "# " + "=" * 84
 SECTION_RULE = "-" * 84
 _FILE_DELIMITER = re.compile(r"^# --- File: (.+) ---$", re.M)
+# A file whose content is the same as an earlier one (sha256) is not copied
+# again: EVERYTHING.LOG lists it on a link line between the banner and the
+# first "# --- File:" section -- text every v1 reader already skips -- and the
+# map marks it "(same as: <path>)". A corpus without duplicates has none, so
+# the golden fixtures and Thin's output are unchanged.
+LINK_PREFIX = "# --- Link: "
+LINK_SUFFIX = " ---"
+_LINK_PATTERN = re.compile(r"^# --- Link: (\{.*\}) ---$", re.M)
 _LEGACY_THICK_DELIMITER = re.compile(r"^#{37}\n### File: (.+)\n#{37}\n", re.M)
 
 SKIPPED_DIR_NAMES = ["node_modules", "venv", "__pycache__", "crawl"]
@@ -119,7 +128,9 @@ def python_metrics(source):
 
 # ------------------------------------------------------------------ writing
 # An entry is a dict: {"path": "sub/file.py" (POSIX, relative, no leading
-# slash), "kind": "dir"|"file", "content": str|None, "metrics": dict|None}.
+# slash), "kind": "dir"|"file", "content": str|None, "metrics": dict|None},
+# and optionally "sha256" and "sameAs" (the path of the earlier file with the
+# same content; such an entry carries no content of its own).
 
 def _tree(entries):
     root = {"name": "", "kind": "dir", "entry": None, "children": {}}
@@ -170,7 +181,10 @@ def build_map(root_name, entries, created):
             if child["kind"] == "dir":
                 label = child["name"] + "/"
             else:
-                label = child["name"] + _metrics_suffix((child["entry"] or {}).get("metrics"))
+                entry = child["entry"] or {}
+                label = child["name"] + _metrics_suffix(entry.get("metrics"))
+                if entry.get("sameAs"):
+                    label += f"  (same as: {entry['sameAs']})"
             lines.append(f"{prefix}{'└── ' if last else '├── '}{label}")
             if child["kind"] == "dir":
                 visit(child, prefix + ("    " if last else "│   "))
@@ -185,9 +199,18 @@ def normalize_content(content):
     return body + "\n" if body else ""
 
 
+def link_line(path, same_as, sha256):
+    body = json.dumps({"path": path, "sameAs": same_as, "sha256": sha256}, ensure_ascii=False, sort_keys=True)
+    return f"{LINK_PREFIX}{body}{LINK_SUFFIX}"
+
+
 def build_everything(map_text, entries, created):
     out = [f"{map_text}\n{SECTION_RULE}\n\n{BANNER}\n# EVERYTHING.LOG\n# Log started at: {created}\n{BANNER}\n"]
-    for entry in order_entries(entries):
+    ordered = order_entries(entries)
+    for entry in ordered:
+        if entry["kind"] == "file" and entry.get("sameAs"):
+            out.append(link_line(entry["path"], entry["sameAs"], entry.get("sha256")) + "\n")
+    for entry in ordered:
         if entry["kind"] != "file" or entry.get("content") is None:
             continue
         out.append(f"\n# --- File: {entry['path']} ---\n{normalize_content(entry['content'])}")
@@ -251,3 +274,23 @@ def parse_everything(text):
         "files": [f for f in raw if is_safe_relative_path(f["path"])],
         "skipped": [f["path"] for f in raw if not is_safe_relative_path(f["path"])],
     }
+
+
+def parse_links(text):
+    """[{'path', 'sameAs', 'sha256'}] from the link lines before the first
+    file section; both paths must be safe. [] for a corpus without any."""
+    text = text.lstrip("\ufeff").replace("\r\n", "\n")
+    first = _FILE_DELIMITER.search(text)
+    links = []
+    for m in _LINK_PATTERN.finditer(text[:first.start() if first else len(text)]):
+        try:
+            link = json.loads(m.group(1))
+        except ValueError:
+            continue
+        if not isinstance(link, dict):
+            continue
+        path, same_as = link.get("path"), link.get("sameAs")
+        if isinstance(path, str) and isinstance(same_as, str) \
+                and is_safe_relative_path(path) and is_safe_relative_path(same_as):
+            links.append({"path": path, "sameAs": same_as, "sha256": link.get("sha256")})
+    return links

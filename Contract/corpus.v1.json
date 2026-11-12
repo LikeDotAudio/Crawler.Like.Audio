@@ -9,6 +9,8 @@
     "everything": "EVERYTHING.LOG"
   },
   "fileDelimiter": "# --- File: {path} ---",
+  "linkLine": "# --- Link: {json} ---",
+  "_linkLine": "Added 2026-11-12, still version 1: a file whose sha256 matches an earlier file's (corpus order, empty files never) is not copied again. {json} is {\"path\", \"sameAs\", \"sha256\"} (sorted keys); the lines sit between the EVERYTHING.LOG banner and the first file section, which every v1 reader skips, and the map labels the file '  (same as: <path>)'. Thick writes and regenerates them; a corpus without duplicates has none.",
   "banner": "# ====================================================================================",
   "sectionRule": "------------------------------------------------------------------------------------",
   "skippedDirNames": ["node_modules", "venv", "__pycache__", "crawl"],

@@ -19,32 +19,31 @@ class CommentAndMarkdownExtractor:
             if self.log_callback:
                 self.log_callback(f"❌ Error opening extractor output file: {e}", "header")
 
-    def extract_from_file(self, file_path, relative_path):
-        if not self.file_handle:
-            return
-
-        try:
-            _, ext = os.path.splitext(file_path)
-            ext = ext.lower()
-
+    def extract_text(self, file_path, content=None):
+        """What this file contributes (a Markdown file whole, a code file's
+        comments); no shared state, so the crawl's worker threads call it.
+        `content` saves a second read when the caller already has the text."""
+        ext = os.path.splitext(file_path)[1].lower()
+        if content is None:
             with open(file_path, "r", encoding="utf-8", errors='replace') as f:
                 content = f.read()
+        return content if ext == '.md' else self._extract_comments(content, ext)
 
-            extracted_text = ""
+    def write_extracted(self, relative_path, extracted_text):
+        """Appends one file's section; the crawl calls it in corpus order
+        from one thread, so the log is the same run to run."""
+        if not self.file_handle or not extracted_text or not extracted_text.strip():
+            return
+        self.file_handle.write(f"#####################################\n")
+        self.file_handle.write(f"### File: {relative_path}\n")
+        self.file_handle.write(f"#####################################\n")
+        self.file_handle.write(f"{extracted_text.strip()}\n\n")
 
-            if ext == '.md':
-                # For Markdown files, we extract the whole content
-                extracted_text = content
-            else:
-                # For code files, we extract comments
-                extracted_text = self._extract_comments(content, ext)
-
-            if extracted_text.strip():
-                self.file_handle.write(f"#####################################\n")
-                self.file_handle.write(f"### File: {relative_path}\n")
-                self.file_handle.write(f"#####################################\n")
-                self.file_handle.write(f"{extracted_text.strip()}\n\n")
-
+    def extract_from_file(self, file_path, relative_path, content=None):
+        if not self.file_handle:
+            return
+        try:
+            self.write_extracted(relative_path, self.extract_text(file_path, content))
         except Exception as e:
             if self.log_callback:
                 self.log_callback(f"❌ Error extracting from {file_path}: {e}", "header")

@@ -19,6 +19,10 @@ def default_config_path():
     base = os.environ.get('XDG_CONFIG_HOME', '').strip() or os.path.join(os.path.expanduser('~'), '.config')
     return os.path.join(base, 'crawler-like-audio', 'config.ini')
 
+# Threads that hash, read and extract files during a crawl ([General] crawl_workers).
+# The work is file I/O, so the default is concurrent.futures' own for I/O-bound pools.
+DEFAULT_CRAWL_WORKERS = min(32, (os.cpu_count() or 1) + 4)
+
 
 class ConfigManager:
     def __init__(self, config_path=None):
@@ -72,6 +76,18 @@ class ConfigManager:
 
     def set_make_zip(self, value):
         self.config['General']['make_zip'] = str(value)
+        self._save_config()
+
+    def get_crawl_workers(self):
+        """[General] crawl_workers, at least 1; DEFAULT_CRAWL_WORKERS when unset or not a number."""
+        try:
+            value = self.config['General'].getint('crawl_workers', DEFAULT_CRAWL_WORKERS)
+        except ValueError:
+            return DEFAULT_CRAWL_WORKERS
+        return max(1, value)
+
+    def set_crawl_workers(self, value):
+        self.config['General']['crawl_workers'] = str(int(value))
         self._save_config()
 
     def get_web_url(self):

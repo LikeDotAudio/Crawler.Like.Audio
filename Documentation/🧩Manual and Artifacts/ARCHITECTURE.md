@@ -106,6 +106,12 @@ byte, in Python and in the browser.
   except trailing newlines, which collapse to exactly one (an empty file stays empty) — the
   one place a round trip is not exact. A content line that is itself a delimiter line splits
   the file; readers drop paths with `..`, a drive or a leading `/`.
+- **Duplicates (link lines).** Thick hashes every file (sha256, streamed). A non-empty file
+  whose content matches an earlier file in map order is not copied again: between the banner
+  and the first file section EVERYTHING.LOG carries `# --- Link: {"path", "sameAs",
+  "sha256"} ---` (JSON, sorted keys), and the map labels it `  (same as: <path>)`. Every v1
+  reader skips text before the first section, so this stayed version 1; Thick's Regenerator
+  writes the copy back from the file it names. A folder without duplicates has no link lines.
 - **Which files.** Folders named `node_modules`, `venv`, `__pycache__`, `crawl` (any case),
   any dot-folder and any 14-digit timestamp folder are skipped; the root `.gitignore` applies
   with git's rules (`fixtures/v1/ignore-cases.json`); the extension (`os.path.splitext`'s

@@ -254,7 +254,10 @@ class FolderCrawlerApp:
         extractor = CommentAndMarkdownExtractor(self.output_dir, log_callback=self._log)
         extractor.open_file()
         
-        crawler = Crawler(target_dir, saver, allowed_extensions=allowed_extensions, log_callback=self._log, extractor=extractor)
+        # _log only queues the write with root.after, so the crawl thread may call it;
+        # the crawl's worker threads never log (Crawler logs from this thread, in order).
+        crawler = Crawler(target_dir, saver, allowed_extensions=allowed_extensions, log_callback=self._log,
+                          extractor=extractor, workers=self.config_manager.get_crawl_workers())
         crawler.respect_gitignore = respect_gitignore
         crawler.crawl()
         
